@@ -4,21 +4,19 @@ export default {
   theme: {
     extend: {
       colors: {
-        brand: {
-          500: "#2C46B1",
-          600: "#2C4090",
+        blue: {
+          base: "#2C46B1",
+          dark: "#2C4090",
         },
-        danger: {
-          500: "#B12C4D",
-        },
-        surface: {
-          50: "#F9F9FA",
-          100: "#E4E5EB",
-          200: "#CDCED4",
+        gray: {
+          100: "#F9F9FA",
+          200: "#E4E5EB",
+          300: "#CDCED4",
           400: "#74788A",
-          600: "#4C4F5B",
-          900: "#1F2025",
+          500: "#4C4F5B",
+          600: "#1F2025",
         },
+        danger: "#B12C4D",
       },
       fontFamily: {
         sans: ["Open Sans", "ui-sans-serif", "system-ui", "sans-serif"],

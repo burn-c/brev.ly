@@ -13,7 +13,7 @@ function HomePage() {
   return (
     <div className="flex min-h-dvh flex-col bg-zinc-950 text-zinc-50">
       <header className="mx-auto flex w-full max-w-6xl items-center gap-2 px-4 py-6 sm:px-6">
-        <Scissors className="size-5 text-brand-500" aria-hidden="true" />
+        <Scissors className="size-5 text-blue-base" aria-hidden="true" />
         <span className="text-lg font-bold tracking-tight">Brev.ly</span>
       </header>
 
