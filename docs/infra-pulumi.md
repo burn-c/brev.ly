@@ -25,12 +25,16 @@ Infraestrutura como código (IaC) do Brev.ly com **Pulumi** (TypeScript + AWS). 
 # uma vez por máquina
 AWS_REGION=us-east-1 pulumi login s3://brevly-pulumi-state
 
-# config da stack (já versionada em Pulumi.brevly-prod.yaml)
-AWS_REGION=us-east-1 pulumi config set brevly-infra:accountId 488182246611
-AWS_REGION=us-east-1 pulumi config set --secret brevly-infra:dbPassword <senha>
+# config da stack (NÃO versionada — ver nota abaixo)
+AWS_REGION=us-east-1 PULUMI_CONFIG_PASSPHRASE="" pulumi config set brevly-infra:accountId 488182246611
+AWS_REGION=us-east-1 PULUMI_CONFIG_PASSPHRASE="" pulumi config set --secret brevly-infra:dbPassword <senha>
 ```
 
 > O namespace de config é o **nome do projeto** (`brevly-infra`), não `brevly`.
+>
+> **A config da stack (`Pulumi.brevly-prod.yaml`) não é versionada** (está no `.gitignore` do `infra/`) porque contém o `dbPassword` criptografado e o repo é público. Após um clone/limpeza, recrie com os comandos acima. A stack e o estado ficam no backend S3 (`s3://brevly-pulumi-state`), então a config pode ser recriada sem perder o deploy.
+>
+> **Passphrase:** a stack foi criada com `PULUMI_CONFIG_PASSPHRASE=""` (vazio). Para ler/editar a config, use o mesmo valor: `PULUMI_CONFIG_PASSPHRASE="" pulumi ...`.
 
 ## Comandos
 
@@ -52,7 +56,7 @@ pnpm destroy        # pulumi destroy -s brevly-prod
 
 - `index.ts` — programa Pulumi (VPC, storage front/CSV, CDN, RDS, ECR, ECS+ALB).
 - `Pulumi.yaml` — metadados do projeto (runtime nodejs + pnpm).
-- `Pulumi.brevly-prod.yaml` — config da stack (region, accountId, dbPassword secreto).
+- `Pulumi.brevly-prod.yaml` — config da stack (region, accountId, dbPassword secreto) — **não versionado** (`.gitignore`), recriar com `pulumi config set`.
 - `package.json` / `pnpm-workspace.yaml` — dependências e pinagem.
 
 ## Deploy

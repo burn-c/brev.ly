@@ -48,7 +48,7 @@
 ### `infra/` — Infraestrutura (Pulumi) ✅ Fase 6 concluída (preview validado)
 
 - Projeto Pulumi `brevly-infra` com **programa completo** em `index.ts`: VPC (2 AZs + NAT), S3 front-end + CSV, CloudFront (CDN), ACM, RDS PostgreSQL `db.t4g.micro`, ECR + ECS Fargate + ALB.
-- **Stack `brevly-prod` inicializada** (região `us-east-1`, conta `488182246611`) com config versionada (`accountId` + `dbPassword` secreto).
+- **Stack `brevly-prod` inicializada** (região `us-east-1`, conta `488182246611`) com config local `accountId` + `dbPassword` secreto. **A config da stack (`Pulumi.brevly-prod.yaml`) não é versionada** (`.gitignore` do infra — repo público) e foi criada com passphrase vazio (`PULUMI_CONFIG_PASSPHRASE=""`). Recriar com `pulumi config set` após clone (ver [`infra-pulumi.md`](./infra-pulumi.md)).
 - **Backend de estado:** `s3://brevly-pulumi-state` (**bucket exclusivo do Brev.ly**, versionado — substitui o `burn-pulumi-state` do ADR-006, inacessível desta conta; **ADR-009**).
 - **`pulumi preview` validado**: 50 recursos a criar, **zero erros/warnings**. Logs de `up` pendentes de aplicar (só aplicar quando for fazer o deploy real, Fase 7).
 - Versões pinadas `@pulumi/aws@7.35.0` + `@pulumi/awsx@3.6.0` (compatíveis com os plugins já instalados localmente).

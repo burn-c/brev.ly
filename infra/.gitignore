@@ -1,0 +1,6 @@
+node_modules
+bin
+# Config da stack contém segredos (dbPassword) — recriar localmente
+# com `pulumi config set` (ver docs/infra-pulumi.md)
+Pulumi.*.yaml
+!Pulumi.yaml
