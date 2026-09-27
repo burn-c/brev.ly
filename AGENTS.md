@@ -21,6 +21,7 @@ Instruções operacionais para agentes que trabalham neste repositório. Leia o 
 ### Regra para agentes de layout (web/)
 
 - Agentes que refinam a UI devem **atualizar** `docs/status.md` (seção `web/`) e os docs de [`web/docs/`](web/docs/design-tokens.md) (`design-tokens.md`, `design-spec.md`) a cada avanço, além de segui-los como fonte de verdade visual.
+- **Acesso ao Figma** (fonte de verdade visual): ver seção "Acesso ao Figma" em [`docs/status.md`](docs/status.md) — configurado globalmente, token fora do repo.
 - Não misturar trabalho de layout com o de `server/`/`infra/` em um mesmo commit.
 
 ## Convenções

@@ -237,3 +237,5 @@ Text (484×36):
 - **Checklist item 24** — "Siga o mais fielmente possível o layout do Figma": implementação orientada a esta spec.
 - **Item 25** — UX: empty state (seção 5), loading (skeletons/spinner), bloqueio de ações (botão disabled), toasts.
 - **Item 26** — Responsividade: telas mobile 390px (seções 4.2, 6, 7).
+
+> **Acesso ao Figma** (reconsultar antes de implementar): ver seção "Acesso ao Figma" em [`docs/status.md`](../../docs/status.md).
