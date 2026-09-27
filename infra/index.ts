@@ -66,19 +66,11 @@ const frontendBucketPolicy = new aws.s3.BucketPolicy(
   { dependsOn: [publicAccessBlock] }
 )
 
-const cdnCertificate = new aws.acm.Certificate("brevly-cdn-certificate", {
-  domainName: "cdn.brevly.com.br",
-  validationMethod: "DNS",
-  tags: commonTags,
-})
-
 const cdnDistribution = new aws.cloudfront.Distribution("brevly-cdn", {
   enabled: true,
   defaultRootObject: "index.html",
-  aliases: ["cdn.brevly.com.br"],
   viewerCertificate: {
-    acmCertificateArn: cdnCertificate.arn,
-    sslSupportMethod: "sni-only",
+    cloudfrontDefaultCertificate: true,
   },
   origins: [
     {
@@ -118,23 +110,38 @@ const csvBucket = new aws.s3.Bucket("brevly-csv", {
   tags: { ...commonTags, name: "brevly-csv-reports" },
 })
 
-const csvBucketPolicy = new aws.s3.BucketPolicy("brevly-csv-policy", {
-  bucket: csvBucket.bucket,
-  policy: csvBucket.arn.apply(arn =>
-    JSON.stringify({
-      Version: "2012-10-17",
-      Statement: [
-        {
-          Sid: "PublicReadGetObject",
-          Effect: "Allow",
-          Principal: "*",
-          Action: "s3:GetObject",
-          Resource: `${arn}/*`,
-        },
-      ],
-    })
-  ),
-})
+const csvPublicAccessBlock = new aws.s3.BucketPublicAccessBlock(
+  "brevly-csv-public-access-block",
+  {
+    bucket: csvBucket.bucket,
+    blockPublicAcls: false,
+    blockPublicPolicy: false,
+    ignorePublicAcls: false,
+    restrictPublicBuckets: false,
+  }
+)
+
+const csvBucketPolicy = new aws.s3.BucketPolicy(
+  "brevly-csv-policy",
+  {
+    bucket: csvBucket.bucket,
+    policy: csvBucket.arn.apply(arn =>
+      JSON.stringify({
+        Version: "2012-10-17",
+        Statement: [
+          {
+            Sid: "PublicReadGetObject",
+            Effect: "Allow",
+            Principal: "*",
+            Action: "s3:GetObject",
+            Resource: `${arn}/*`,
+          },
+        ],
+      })
+    ),
+  },
+  { dependsOn: [csvPublicAccessBlock] }
+)
 
 // ---------------------------------------------------------------- Banco (RDS PostgreSQL)
 
