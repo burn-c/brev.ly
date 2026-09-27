@@ -113,6 +113,15 @@ jobs:
           cache: pnpm
           cache-dependency-path: infra/pnpm-lock.yaml
 
+      - name: Debug OIDC token claims
+        run: |
+          TOKEN=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | python3 -c "import sys,json;print(json.load(sys.stdin)['value'])")
+          # decodifica o payload JWT
+          PAYLOAD=$(echo "$TOKEN" | cut -d. -f2 | python3 -c "import sys,base64;d=sys.stdin.read();d+='='*(-len(d)%4);print(base64.urlsafe_b64decode(d).decode())")
+          echo "CLAIMS: $PAYLOAD"
+          echo "SUB=$PAYLOAD" | python3 -c "import sys,json,re; p=sys.stdin.read(); sub=re.search(r'\"sub\":\s*\"([^\"]+)\"', p); print('SUB =', sub.group(1) if sub else 'N/A'); aud=re.search(r'\"aud\":\s*\"([^\"]+)\"', p); print('AUD =', aud.group(1) if aud else 'N/A')"
+
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
