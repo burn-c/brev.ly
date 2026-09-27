@@ -12,11 +12,15 @@ Todas as mudanças notáveis do projeto serão documentadas neste arquivo, segui
 - **Env `AWS_ENDPOINT`** (opcional) para endpoints S3-compatíveis custom.
 - **Dependência** `@aws-sdk/client-s3`.
 - **Testes**: suíte subiu de 49 → **75** (storage: 17, report-service: 7, report route: 2 + anteriores).
+- **Design system (web/) extraído do Figma**: `web/docs/design-spec.md` com a especificação detalhada das 8 telas (Links/Empty/Redirect/Not Found × desktop/mobile) e componentes (Button primary/secondary, Icon Button, Input) e `web/docs/design-tokens.md` com os tokens oficiais do Style Guide (`blue-base`, `blue-dark`, `gray-100..600`, `danger`).
+- **Tokens de cor renomeados** no Tailwind para os nomes oficiais do Figma (antes `brand`/`surface`, agora `blue.*`/`gray.*`/`danger`).
+- **Assets vetoriais** exportados do Figma: `web/assets/Logo.svg`, `web/assets/Logo_Icon.svg`, `web/assets/404.svg` (com `<title>` acessível).
 
 ### Observações
 
 - A validação da integração de rede (upload real para S3/R2) será feita no deploy (Fase 6/7). Em ambiente local, o `s3mock` é incompatível com o AWS SDK v3 (v3 falha no parse XML; v2 não persiste objetos) e o MinIO/LocalStack estão bloqueados no registro Docker desta máquina — isso não afeta o código, que usa o mesmo SDK comprovado contra R2 no projeto de referência.
 - Checklist de compliance: itens 9–13 (CSV via CDN, nome único, listagem performática, campos do CSV) cobertos.
+- Design/UI orientado ao Figma (item 24 do checklist): implementação das telas guiada por `web/docs/design-spec.md`.
 
 ## [0.2.1] - 2026-09-27
 
