@@ -246,6 +246,7 @@ const appImage = pulumi.interpolate`${repository.url}:latest`
 const fargateService = new awsx.ecs.FargateService("brevly-server", {
   cluster: ecsCluster.arn,
   desiredCount: 1,
+  continueBeforeSteadyState: true,
   networkConfiguration: {
     assignPublicIp: false,
     subnets: vpc.privateSubnetIds,
