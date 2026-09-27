@@ -1,11 +1,22 @@
 import { describe, expect, it, vi } from "vitest"
 
 import { buildApp } from "../app.js"
+import type { LinksService } from "../services/links-service.js"
 import type { ReportService } from "../services/report-service.js"
 
 function createReportServiceStub(): ReportService {
   return {
     exportLinksCsv: vi.fn(),
+  }
+}
+
+function createLinksServiceStub(): LinksService {
+  return {
+    createLink: vi.fn(),
+    listLinks: vi.fn(),
+    getLinkByShortCode: vi.fn(),
+    deleteLink: vi.fn(),
+    incrementAccess: vi.fn(),
   }
 }
 
@@ -15,7 +26,7 @@ type InjectOptions = {
 }
 
 async function inject(stub: ReportService, options: InjectOptions) {
-  const app = buildApp({ reportService: stub })
+  const app = buildApp({ reportService: stub, linksService: createLinksServiceStub() })
 
   const response = await app.inject(options)
 
