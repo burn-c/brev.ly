@@ -20,6 +20,9 @@ importers:
       pg:
         specifier: ^8.23.0
         version: 8.23.0
+      uuidv7:
+        specifier: ^1.2.1
+        version: 1.2.1
       zod:
         specifier: ^3.25.76
         version: 3.25.76
@@ -277,6 +280,12 @@ packages:
 
   '@esbuild/freebsd-x64@0.27.7':
     resolution: {integrity: sha512-jOBDK5XEjA4m5IJK3bpAQF9/Lelu/Z9ZcdhTRLf4cajlB+8VEhFFRjWgfy3M1O4rO2GQ/b2dLwCUGpiF/eATNQ==}
+    engines: {node: '>=18'}
+    cpu: [x64]
+    os: [freebsd]
+
+  '@esbuild/freebsd-x64@0.28.2':
+    resolution: {integrity: sha512-78XJTJkvPs0kz2w61301PJjXl4g7q3JqiYMZ/M/yVI73EHBrCRTgkhu9oqG7vPqq+a/yadEW8aD+agKlk5xrmg==}
     engines: {node: '>=18'}
     cpu: [x64]
     os: [freebsd]
@@ -1638,6 +1647,10 @@ packages:
   undici-types@8.9.0:
     resolution: {integrity: sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg==}
 
+  uuidv7@1.2.1:
+    resolution: {integrity: sha512-4kPkK3/XTQW9Hbm4CaqfICn+kY9LJtDVEOfgsRRra/+n2Ofg4NqzRFceAkxvQ/Ud/6BpHOPzj8cirqM7TzTN5Q==}
+    hasBin: true
+
   vite@8.3.1:
     resolution: {integrity: sha512-/bvH9E9tmCXRGp2uXY3WbOldqpTwFkbha/8ANaEQ6VkxhH60KyqLwgZq6lG2y+4uT55x9+9eUHMpQ7uGnOCKjA==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -1862,6 +1875,9 @@ snapshots:
     optional: true
 
   '@esbuild/freebsd-x64@0.27.7':
+    optional: true
+
+  '@esbuild/freebsd-x64@0.28.2':
     optional: true
 
   '@esbuild/linux-arm64@0.18.20':
@@ -2408,6 +2424,7 @@ snapshots:
       '@esbuild/android-x64': 0.28.2
       '@esbuild/darwin-arm64': 0.28.2
       '@esbuild/freebsd-arm64': 0.28.2
+      '@esbuild/freebsd-x64': 0.28.2
       '@esbuild/linux-arm64': 0.28.2
       '@esbuild/linux-loong64': 0.28.2
       '@esbuild/linux-mips64el': 0.28.2
@@ -2879,6 +2896,8 @@ snapshots:
   ufo@1.6.4: {}
 
   undici-types@8.9.0: {}
+
+  uuidv7@1.2.1: {}
 
   vite@8.3.1(@types/node@26.6.3)(esbuild@0.27.7)(tsx@4.23.15):
     dependencies:
