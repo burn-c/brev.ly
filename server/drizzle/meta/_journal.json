@@ -8,6 +8,13 @@
       "when": 1790532316329,
       "tag": "0000_real_shotgun",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790535803169,
+      "tag": "0001_outstanding_sway",
+      "breakpoints": true
     }
   ]
 }

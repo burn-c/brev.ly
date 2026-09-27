@@ -13,6 +13,7 @@ Documentação do modelo de dados e migrations do Brev.ly. Banco: **PostgreSQL**
 | `created_at` | `timestamp with time zone` | NOT NULL, default `now()` |
 
 - O `short_code` possui índice UNIQUE (regra "URL encurtada já existente").
+- `created_at` possui índice **descendente** (`links_created_at_idx`) para a listagem performática (`ORDER BY created_at DESC`).
 - Listagem ordenada por `created_at DESC` com paginação.
 - Schema definido em `server/src/db/schema.ts`.
 
