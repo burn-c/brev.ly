@@ -91,7 +91,7 @@ Mapeamento dos itens de correção automática para a implementação do projeto
   - Se `shortCode` já existir: `409 Conflict`.
   - Se `shortCode` omitido: **auto-gerar** em base62 com **7 caracteres** (case-sensitive), com **retry de até 5 tentativas** em caso de colisão; esgotadas as tentativas, `500`.
 - **Deletar link** — por `id` (uuid v7); `204 No Content`; `404` se inexistente.
-- **Obter URL original por encurtada** — por `shortCode`; `200 { originalUrl }`; `404` se inexistente. Endpoint **idempotente** (não incrementa).
+- **Obter URL original por encurtada** — por `shortCode`; `200` retorna o link completo (contém `originalUrl` e `id` para o incremento); `404` se inexistente. Endpoint **idempotente** (não incrementa).
 - **Listar links** — paginado (`page`, `pageSize`), ordenado por `created_at DESC`; resposta com metadados de paginação. Performático via índices.
 - **Incrementar acessos** — por `id`; `200 { accessCount }`; `404` se inexistente.
 - **Exportar CSV** — consulta em lotes (stream), gera arquivo com nome aleatório e único, faz upload para o storage (S3/R2) e retorna a **URL pública via CDN**.
@@ -165,7 +165,7 @@ Usuário → web/ → POST /links → server → Postgres (valida formato + unic
 
 **2. Redirecionamento (página /:url-encurtada)**
 ```
-Usuário acessa brev.ly/abc123 → web/ → GET /links/abc123  (200 originalUrl)
+Usuário acessa brev.ly/abc123 → web/ → GET /links/abc123  (200 link com id + originalUrl)
                                     → PATCH /links/:id/access (incrementa)
                                     → window.location = originalUrl (302)
 ```
@@ -198,7 +198,7 @@ Usuário clica "Baixar CSV" → web/ → GET /reports/links.csv
 |---|---|---|---|
 | `POST` | `/links` | Criar link | `201` link criado · `400` formato inválido · `409` short code existente |
 | `GET` | `/links` | Listar links (paginado) | `200` `{ data, meta }` |
-| `GET` | `/links/:shortCode` | Obter URL original | `200` `{ originalUrl }` · `404` |
+| `GET` | `/links/:shortCode` | Obter URL original (retorna o link completo) | `200` link · `404` |
 | `DELETE` | `/links/:id` | Deletar link | `204` · `404` |
 | `PATCH` | `/links/:id/access` | Incrementar acessos | `200` `{ accessCount }` · `404` |
 | `GET` | `/reports/links.csv` | Exportar CSV via CDN | `200` `{ url }` |

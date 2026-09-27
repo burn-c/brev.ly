@@ -8,7 +8,7 @@ Contratos da API REST do Brev.ly (Fastify). Base URL: `http://localhost:3333` (v
 |---|---|---|---|---|
 | `POST` | `/links` | Criar link | `201` link criado | `400` formato inválido · `409` short code existente |
 | `GET` | `/links` | Listar links (paginado) | `200` `{ data, meta }` | — |
-| `GET` | `/links/:shortCode` | Obter URL original | `200` `{ originalUrl }` | `404` |
+| `GET` | `/links/:shortCode` | Obter link pela URL encurtada | `200` link completo | `404` |
 | `DELETE` | `/links/:id` | Deletar link | `204` | `400` id inválido · `404` |
 | `PATCH` | `/links/:id/access` | Incrementar acessos | `200` `{ accessCount }` | `400` id inválido · `404` |
 | `GET` | `/health` | Health check | `200` `{ status, timestamp }` | — |
@@ -64,8 +64,10 @@ curl "http://localhost:3333/links?page=1&pageSize=20"
 
 ```bash
 curl http://localhost:3333/links/rs
-# 200 → { "originalUrl": "https://www.rocketseat.com.br" }
+# 200 → { "id": "01a0e412-...", "originalUrl": "https://www.rocketseat.com.br", "shortCode": "rs", "accessCount": 0, "createdAt": "..." }
 ```
+
+> Retorna o link completo para que o front-end possa incrementar acessos por `id` antes de redirecionar (ver ADR-002).
 
 ### Incrementar acessos
 
