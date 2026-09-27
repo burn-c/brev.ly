@@ -152,20 +152,18 @@ describe("createLinksService", () => {
     })
   })
 
-  describe("getOriginalUrl", () => {
-    it("returns the original url for an existing short code", async () => {
-      const repo = new FakeLinksRepository([makeLink({ shortCode: "abc1234" })])
-      const service = createLinksService(repo)
+  describe("getLinkByShortCode", () => {
+    it("returns the link for an existing short code", async () => {
+      const link = makeLink({ shortCode: "abc1234" })
+      const service = createLinksService(new FakeLinksRepository([link]))
 
-      await expect(service.getOriginalUrl("abc1234")).resolves.toEqual({
-        originalUrl: "https://example.com",
-      })
+      await expect(service.getLinkByShortCode("abc1234")).resolves.toEqual(link)
     })
 
     it("throws LinkNotFoundError for an unknown short code", async () => {
       const service = createLinksService(new FakeLinksRepository())
 
-      await expect(service.getOriginalUrl("missing")).rejects.toBeInstanceOf(LinkNotFoundError)
+      await expect(service.getLinkByShortCode("missing")).rejects.toBeInstanceOf(LinkNotFoundError)
     })
   })
 

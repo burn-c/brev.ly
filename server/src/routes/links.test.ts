@@ -25,7 +25,7 @@ function createLinksServiceStub(): LinksService {
       data: [link],
       meta: { page: 1, pageSize: 10, total: 1, totalPages: 1 },
     }),
-    getOriginalUrl: vi.fn().mockResolvedValue({ originalUrl: link.originalUrl }),
+    getLinkByShortCode: vi.fn().mockResolvedValue(link),
     deleteLink: vi.fn().mockResolvedValue(undefined),
     incrementAccess: vi.fn().mockResolvedValue({ accessCount: 1 }),
   }
@@ -131,19 +131,22 @@ describe("GET /links", () => {
 })
 
 describe("GET /links/:shortCode", () => {
-  it("returns 200 with originalUrl", async () => {
+  it("returns 200 with the link", async () => {
     const response = await inject(createLinksServiceStub(), {
       method: "GET",
       url: "/links/abc123",
     })
 
     expect(response.statusCode).toBe(200)
-    expect(response.json()).toEqual({ originalUrl: "https://example.com" })
+    expect(response.json()).toEqual({
+      ...link,
+      createdAt: link.createdAt.toISOString(),
+    })
   })
 
   it("returns 404 when link is not found", async () => {
     const stub = createLinksServiceStub()
-    stub.getOriginalUrl = vi.fn().mockRejectedValue(new LinkNotFoundError("not found"))
+    stub.getLinkByShortCode = vi.fn().mockRejectedValue(new LinkNotFoundError("not found"))
 
     const response = await inject(stub, {
       method: "GET",

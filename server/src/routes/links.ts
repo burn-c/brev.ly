@@ -70,8 +70,8 @@ export async function linksRoutes(app: FastifyInstance, opts: LinksRoutesOptions
     }
 
     try {
-      const { originalUrl } = await linksService.getOriginalUrl(parsed.data.shortCode)
-      return { originalUrl }
+      const link = await linksService.getLinkByShortCode(parsed.data.shortCode)
+      return link
     } catch (error) {
       if (error instanceof LinkNotFoundError) {
         return reply.code(404).send({ message: error.message })

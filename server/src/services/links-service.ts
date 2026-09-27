@@ -25,7 +25,7 @@ export interface LinksService {
     data: Link[]
     meta: { page: number; pageSize: number; total: number; totalPages: number }
   }>
-  getOriginalUrl(shortCode: string): Promise<{ originalUrl: string }>
+  getLinkByShortCode(shortCode: string): Promise<Link>
   deleteLink(id: string): Promise<void>
   incrementAccess(id: string): Promise<{ accessCount: number }>
 }
@@ -87,12 +87,12 @@ export function createLinksService(
       }
     },
 
-    async getOriginalUrl(shortCode) {
+    async getLinkByShortCode(shortCode) {
       const link = await repo.findByShortCode(shortCode)
       if (link === null) {
         throw new LinkNotFoundError()
       }
-      return { originalUrl: link.originalUrl }
+      return link
     },
 
     async deleteLink(id) {
