@@ -15,8 +15,8 @@
 | [`docker.md`](./docker.md) | Dockerfile multi-stage e docker-compose local |
 | [Design tokens (web)](../web/docs/design-tokens.md) | Tokens oficiais do Figma (`blue-base`, `gray-100..600`, `danger`) — fonte de verdade visual |
 | [Design spec (web)](../web/docs/design-spec.md) | Spec das telas e componentes extraída do Figma (8 telas, estados, layout) |
-| `deploy.md` | Passo a passo do deploy AWS (ECS/RDS/S3/CloudFront) (pendente — Fase 6/7) |
-| `infra-pulumi.md` | Stack `brevly-prod`, estado S3, preview/up (pendente — Fase 6) |
+| [`deploy.md`](./deploy.md) | Passo a passo do deploy AWS (ECS/RDS/S3/CloudFront) |
+| [`infra-pulumi.md`](./infra-pulumi.md) | Stack `brevly-prod`, estado S3, preview/up |
 | `ci-cd.md` | Workflows GitHub Actions, OIDC, fluxo PR/main (pendente — Fase 7) |
 
 ## Convenções

@@ -2,6 +2,22 @@
 
 Todas as mudanças notáveis do projeto serão documentadas neste arquivo, seguindo o estilo [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [0.6.0] - 2026-09-27
+
+### Adicionado
+
+- **Infraestrutura Pulumi (Fase 6)** em `infra/index.ts`: VPC (2 AZs + NAT), S3 front-end `brevly-frontend-web` + CSV `brevly-csv-reports`, CloudFront (CDN + ACM), RDS PostgreSQL `db.t4g.micro`, ECR `brevly-server` → ECS Fargate + ALB.
+- **Stack `brevly-prod`** inicializada (região `us-east-1`, conta `488182246611`) com config versionada (`accountId`, `dbPassword` secreto).
+- **Backend de estado exclusivo `s3://brevly-pulumi-state`** (versionado) — substitui o `burn-pulumi-state` do ADR-006, inacessível nesta conta (**ADR-009**).
+- **`pulumi preview` validado**: 50 recursos a criar, sem erros nem warnings.
+- **Pinagem de versões** `@pulumi/aws@7.35.0` + `@pulumi/awsx@3.6.0` via `overrides` no `pnpm-workspace.yaml` (compatíveis com plugins locais).
+- **Docs**: `docs/infra-pulumi.md` e `docs/deploy.md` (novos).
+
+### Observações
+
+- Aplicar a infra (`pulumi up`) fica para o deploy real (Fase 7): emitir o certificado ACM (validação DNS), push da imagem ECR, migrations no RDS e sync do front. Ver [`docs/deploy.md`](./docs/deploy.md).
+- O `preview` é lento (~5–8 min) por causa do `awsx.ec2.Vpc` e da rede — não interromper.
+
 ## [0.5.0] - 2026-09-27
 
 ### Adicionado

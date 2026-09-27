@@ -267,3 +267,34 @@ Adicionar `ShortCodeGenerationError` (`server/src/errors/links-errors.ts`), lan�
 
 - `POST /links` pode retornar `500` em caso raro de colisão contínua.
 - Testes cobrem o mapeamento (service + rota).
+---
+
+## ADR-009 — Backend de estado do Pulumi exclusivo do Brev.ly
+
+- **Status:** Aceita
+- **Data:** 2026-09-27
+
+### Contexto
+
+O ADR-006 previa o bucket compartilhado `s3://burn-pulumi-state` (usado por `burndev.iac`) como backend de estado do stack `brevly-prod`. Na Fase 6, esse bucket se mostrou **inacessível a partir da conta `488182246611`** (`AllAccessDisabled` em todas as regiões), impedindo `pulumi login`/`stack ls`.
+
+### Alternativas consideradas
+
+- **Insistir no `burn-pulumi-state`** (compartilhado): inacessível na conta atual — bloqueia a Fase 6.
+- **Criar bucket exclusivo `brevly-pulumi-state`** na conta do projeto (us-east-1), com versionamento habilitado.
+
+### Decisão
+
+Criar o bucket **`s3://brevly-pulumi-state`** (conta `488182246611`, região `us-east-1`, versionamento ON) e usá-lo como backend de estado do Brev.ly. Login: `AWS_REGION=us-east-1 pulumi login s3://brevly-pulumi-state`.
+
+### Por quê
+
+- O bucket compartilhado não é acessível nesta conta → precisava de um backend funcional.
+- Backend **exclusivo do projeto** evita conflitos de estado com `burndev.iac` e mantém o deploy independente.
+- Versionamento habilitado dá segurança contra corrupção/erros de estado.
+
+### Consequências
+
+- Substitui o ADR-006 para o Brev.ly (o `burn-pulumi-state` permanece válido para `burndev.iac`).
+- `pulumi login s3://brevly-pulumi-state` exige `AWS_REGION=us-east-1` (bucket nessa região).
+- Stack `brevly-prod` inicializada e `preview` validado (50 recursos).

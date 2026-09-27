@@ -18,8 +18,7 @@
 - [x] Fase 3 — CSV/CDN (storage S3/R2, exportação CSV)
 - [~] Fase 4 — Front-end (páginas `/`, `/:url-encurtada`, `*`; fluxos; UX; responsividade) — implementado, falta revisão visual final
 - [x] Fase 5 — Docker (Dockerfile multi-stage + docker-compose local)
-- [ ] Fase 5 — Docker (Dockerfile, docker-compose)
-- [ ] Fase 6 — Infra (Pulumi: VPC/ECS/RDS/S3/CloudFront)
+- [x] Fase 6 — Infra (Pulumi: VPC/ECS/RDS/S3/CloudFront, stack `brevly-prod` — `preview` validado, 50 recursos)
 - [ ] Fase 7 — CI/CD (GitHub Actions + OIDC)
 - [ ] Fase 8 — Testes (suíte completa)
 - [ ] Fase 9 — Entrega (checklist 26 itens, README, submissão)
@@ -46,10 +45,14 @@
 - **Fase 4 em andamento (2026-09-27):** páginas implementadas — `/` (HomePage: formulário RHF+Zod, listagem TanStack Query, delete, CSV, empty/loading/skeleton, copy), `/:url-encurtada` (RedirectPage: GET → PATCH access → `window.location`, fallback "Acesse aqui", 404 → NotFoundPage), `*` (NotFoundPage com 404.svg). Componentes: `Button` (primary/secondary), `IconButton`, `Input` (default/active/error + Warning), `Logo`/`LogoIcon`, `Toast` (Provider + `useToast`). Cliente API em `src/lib/api.ts`. Verificação (lint/typecheck/build) verde.
 - **Regra:** agentes de layout devem atualizar esta seção e os docs de `web/docs/` a cada avanço.
 
-### `infra/` — Infraestrutura (Pulumi) ⏳ esqueleto
+### `infra/` — Infraestrutura (Pulumi) ✅ Fase 6 concluída (preview validado)
 
-- Projeto Pulumi `brevly-infra` criado; stack `brevly-prod` **ainda não inicializada** (Fase 6).
-- Estado planejado: `s3://burn-pulumi-state` (centralizado), região `us-east-1`, conta `488182246611` (ADR-006).
+- Projeto Pulumi `brevly-infra` com **programa completo** em `index.ts`: VPC (2 AZs + NAT), S3 front-end + CSV, CloudFront (CDN), ACM, RDS PostgreSQL `db.t4g.micro`, ECR + ECS Fargate + ALB.
+- **Stack `brevly-prod` inicializada** (região `us-east-1`, conta `488182246611`) com config versionada (`accountId` + `dbPassword` secreto).
+- **Backend de estado:** `s3://brevly-pulumi-state` (**bucket exclusivo do Brev.ly**, versionado — substitui o `burn-pulumi-state` do ADR-006, inacessível desta conta; **ADR-009**).
+- **`pulumi preview` validado**: 50 recursos a criar, **zero erros/warnings**. Logs de `up` pendentes de aplicar (só aplicar quando for fazer o deploy real, Fase 7).
+- Versões pinadas `@pulumi/aws@7.35.0` + `@pulumi/awsx@3.6.0` (compatíveis com os plugins já instalados localmente).
+- Ver [`infra-pulumi.md`](./infra-pulumi.md) e [`deploy.md`](./deploy.md).
 
 ## Acesso ao Figma
 
@@ -75,6 +78,11 @@
 - **Ambiente (Docker):** MinIO e LocalStack bloqueados no registro; `s3mock` v3 incompatível (parse XML) e v2 não persiste uploads do SDK v3. **Validação de rede S3/R2 fica para o deploy (F6/7).** O mesmo SDK é comprovado contra R2 no projeto de referência.
 - **Storage lazy:** `createStorageProvider` valida na hora do upload (não quebra o `buildApp` sem config).
 - **CORS:** origin = `FRONTEND_URL` (default `http://localhost:5173`).
+- **Pulumi — namespace de config:** é o **nome do projeto** (`brevly-infra:accountId`), não um nome livre (`brevly:accountId` gera erro "Missing required configuration variable").
+- **Pulumi — versões de plugin:** o CLI usa a versão do SDK que o programa importa; se houver resíduo de versões antigas no store pnpm (`node_modules/.pnpm/@pulumi+aws@*`), ele tenta baixar o plugin correspondente e trava em rede lenta. Fixar `@pulumi/aws`/`@pulumi/awsx` via `overrides` no `pnpm-workspace.yaml` + `rm -rf node_modules && pnpm install` resolve. Plugins já instalados ficam em `~/.pulumi/plugins`.
+- **Pulumi — login/região:** o bucket de estado `brevly-pulumi-state` está em `us-east-1`; rodar `AWS_REGION=us-east-1` junto com `pulumi` (o `~/.aws/config` usa `us-east-2`, causando `PermanentRedirect`).
+- **Pulumi — preview lento:** o `awsx.ec2.Vpc` gera ~30 recursos e o preview faz muitas chamadas AWS; pode levar 5–8 min. Não interromper — rodar em background e aguardar.
+- **S3 API:** `s3.BucketV2` está deprecado no `@pulumi/aws@7.35` → usar `s3.Bucket` (mesmas props).
 
 ## Decisões recentes
 
@@ -88,14 +96,15 @@
 | [`decisions.md#ADR-006`](./decisions.md) | Estado Pulumi em S3 centralizado | `s3://burn-pulumi-state` |
 | [`decisions.md#ADR-007`](./decisions.md) | `.env` via `process.loadEnvFile` | zero dependência de `dotenv` |
 | [`decisions.md#ADR-008`](./decisions.md) | Retry esgotado → `500` | `ShortCodeGenerationError`; `409` só para custom code |
+| [`decisions.md#ADR-009`](./decisions.md) | Backend Pulumi exclusivo | `s3://brevly-pulumi-state` (substitui ADR-006) |
 
 ## Próximos passos
 
 1. **Fase 4 — Front-end (finalização):** revisão visual das páginas contra o `design-spec.md` (Desktop 1366×720 e Mobile 390px), ajustes finos de fidelidade, testes manuais dos fluxos (criar/listar/deletar/redirecionar/CSV) e marcação como concluída.
-2. Fase 6 — Pulumi (stack `brevly-prod`, recursos AWS).
-4. Fase 7 — CI/CD (GitHub Actions, OIDC).
-5. Fase 8 — Testes e2e/aceite.
-6. Fase 9 — Entrega (repositório público, push, submissão FTR).
+2. **Fase 6 — aplicar a infra** (`pulumi up`) quando for fazer o deploy real: emitir o certificado ACM (validação DNS), push da imagem ECR, migrations no RDS e sync do front no S3. Ver [`deploy.md`](./deploy.md).
+3. Fase 7 — CI/CD (GitHub Actions, OIDC).
+4. Fase 8 — Testes e2e/aceite.
+5. Fase 9 — Entrega (repositório público, push, submissão FTR).
 
 ## Como atualizar este documento
 

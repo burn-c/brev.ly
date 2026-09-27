@@ -74,7 +74,7 @@ Fases do roadmap em [`spec.md`](./spec.md#10-roadmap):
 - [x] **Fase 3 — CSV/CDN** (storage S3/R2, exportação CSV, nome único via CDN)
 - [~] Fase 4 — Front-end (páginas `/`, `/:url-encurtada`, `*`; fluxos; UX) — implementado, aguardando revisão visual final
 - [x] **Fase 5 — Docker** (Dockerfile multi-stage + docker-compose local)
-- [ ] Fase 6 — Infra (Pulumi)
+- [x] **Fase 6 — Infra (Pulumi)** (VPC/ECS/RDS/S3/CloudFront, stack `brevly-prod` — preview validado)
 - [ ] Fase 7 — CI/CD
 - [ ] Fase 8 — Testes
 - [ ] Fase 9 — Entrega
