@@ -2,6 +2,14 @@
 
 Todas as mudanças notáveis do projeto serão documentadas neste arquivo, seguindo o estilo [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [0.2.1] - 2026-09-27
+
+### Corrigido
+
+- `GET /links/:shortCode` passa a retornar o **link completo** (inclui `id`), permitindo ao front-end incrementar acessos por `id` no fluxo de redirecionamento (ADR-002). Antes retornava apenas `{ originalUrl }`.
+- Mensagens de erro dos endpoints não são mais vazias (`URL encurtada já existente`, `URL encurtada mal formatada`, `Link não encontrado`, `URL original inválida`).
+- O pool do PostgreSQL é fechado no shutdown do app (hook `onClose` do Fastify), evitando vazamento de conexão em produção.
+
 ## [0.2.0] - 2026-09-27
 
 ### Adicionado
