@@ -1,147 +1,66 @@
 # Design Tokens — Brev.ly
 
 Extraído do arquivo Figma oficial **"Encurtador de Links (Community)"**
-(`WV2Kpt6RdFhUJHV9lCfMGU`) — página **🎨 Style Guide**. Fonte de verdade para a UI.
+(`WV2Kpt6RdFhUJHV9lCfMGU`) — página **🎨 Style Guide**. Especificação completa
+das telas em [`design-spec.md`](./design-spec.md).
 
 ---
 
 ## 1. Cores
 
-### Produto (marca)
+Nomes oficiais definidos no Style Guide do Figma.
 
 | Token | Hex | Uso |
 |---|---|---|
-| `brand` | `#2C46B1` | Primary — botões, links, active input, stroke hover |
-| `brand-dark` | `#2C4090` | Hover do botão primary |
-
-### Base (grayscale)
-
-| Token | Hex | Uso |
-|---|---|---|
-| `gray-0` | `#FFFFFF` | Texto sobre primary, ícones |
-| `gray-50` | `#F9F9FA` | Fundo suave / superfícies claras |
-| `gray-100` | `#E4E5EB` | **Fundo das telas**, botão secondary, icon button |
-| `gray-200` | `#CDCED4` | Border input default |
-| `gray-400` | `#74788A` | Placeholder / texto secundário |
-| `gray-600` | `#4C4F5B` | Texto corpo secundário, label secondary button |
-| `gray-900` | `#1F2025` | Texto principal (títulos, headings) |
-
-### Feedback
-
-| Token | Hex | Uso |
-|---|---|---|
+| `blue-base` | `#2C46B1` | Primary — botão, links, active/error input, ícone logo |
+| `blue-dark` | `#2C4091` | Hover do botão primary |
+| `white` | `#FFFFFF` | Texto sobre primary, ícones |
+| `gray-100` | `#F9F9FB` | Fundo dos cards (superfícies) |
+| `gray-200` | `#E4E6EC` | **Fundo das telas**, botão secondary, icon button, dividers |
+| `gray-300` | `#CDCFD5` | Border input default |
+| `gray-400` | `#74798B` | Placeholder / label / empty text |
+| `gray-500` | `#4D505C` | Texto secundário (acessos, URL original) |
+| `gray-600` | `#1F2025` | Texto principal (títulos) |
 | `danger` | `#B12C4D` | Estado de erro do input |
+
+### Valores renderizados (pixel-accurate)
+
+Os hex acima são os nominais do Style Guide. Os valores renderizados no canvas:
+
+| Token | Renderizado |
+|---|---|
+| `blue-base` | `#2C46B1` |
+| `blue-dark` | `#2C4090` |
+| `gray-100` | `#F9F9FA` |
+| `gray-200` | `#E4E5EB` |
+| `gray-300` | `#CDCED4` |
+| `gray-400` | `#74788A` |
+| `gray-500` | `#4C4F5B` |
+| `gray-600` | `#1F2025` |
 
 ---
 
 ## 2. Tipografia
 
-**Família:** Open Sans (via Google Fonts).
+**Família:** Open Sans (via Google Fonts). **Logo:** Quicksand 700.
 
 | Nome | Size | Line Height | Weight | Case |
 |---|---|---|---|---|
-| `text-xl` | 24px | 32px | 700 (Bold) | Default |
-| `text-lg` | 18px | 24px | 700 (Bold) | Default |
-| `text-md` | 14px | 18px | 600 (SemiBold) | Default |
-| `text-sm` | 12px | 16px | 400 / 600 (Regular & SemiBold) | Default |
-| `text-xs` | 10px | 14px | 400 (Regular) | **Uppercase** |
-
-> Uso confirmado nas telas: títulos (`Novo link`, `Meus links`) → `text-lg` 700;
-> headlines de estado (`Redirecionando...`, `Link não encontrado`) → `text-xl` 700;
-> link encurtado na listagem → `text-md` 600 em `#2C46B1`.
-
-**Logo:** `Quicksand` 700 (texto "brev.ly" no Figma). Os ícones são do pacote
-**Phosphor Icons** (`Copy`, `Trash`, `Warning`, `DownloadSimple`, `Link`).
+| `text-xl` | 24px | 32px | 700 | Default |
+| `text-lg` | 18px | 24px | 700 | Default |
+| `text-md` | 14px | 18px | 600 | Default |
+| `text-sm` | 12px | 16px | 400 / 600 | Default |
+| `text-xs` | 10px | 14px | 400 | **Uppercase** |
 
 ---
 
-## 3. Componentes
+## 3. Componentes (resumo)
 
-### Button — primary (default 352×48)
+| Componente | Dimensão | Radius | Fill | Border |
+|---|---|---|---|---|
+| Button primary | 352×48 (full) | 8 | `blue-base` / `blue-dark` (hover) | — |
+| Button secondary | 100×32 | 4 | `gray-200` | `blue-base` w1 (hover) |
+| Icon Button | 32×32 | 4 | `gray-200` | `blue-base` w1 (hover) |
+| Input | 316×48 | 8 | — | `gray-300` w1 / `blue-base`·`danger` w1.5 |
 
-| Estado | Fill | Texto | Radius |
-|---|---|---|---|
-| default | `#2C46B1` | `#FFFFFF` 14px 600 | 8 |
-| hover | `#2C4090` | `#FFFFFF` 14px 600 | 8 |
-| disabled | `#2C46B1` opacidade 0.5 | `#FFFFFF` 14px 600 | 8 |
-
-### Button — secondary (100×32)
-
-| Estado | Fill | Texto | Radius |
-|---|---|---|---|
-| default | `#E4E5EB` | `#4C4F5B` 12px 600 | 4 |
-| hover | `#E4E5EB` + stroke `#2C46B1` w1 | `#4C4F5B` 12px 600 | 4 |
-| disabled | `#E4E5EB` opacidade 0.5 | `#4C4F5B` 12px 600 | 4 |
-
-> Botão secundário contém ícone (16×16) + label (32×16). Usado no header "Meus links" (CSV).
-
-### Icon Button (32×32)
-
-| Estado | Fill | Radius |
-|---|---|---|
-| default | `#E4E5EB` | 4 |
-| hover | `#E4E5EB` + stroke `#2C46B1` w1 | 4 |
-
-> Ícone 16×16 dentro. Usado nas ações Copy/Trash de cada row.
-
-### Input (352×48)
-
-| Estado | Border | Texto | Radius |
-|---|---|---|---|
-| default (empty) | `#CDCED4` w1 | placeholder `#74788A` 14px 400 | 8 |
-| active | `#2C46B1` w1.5 | texto `#2C46B1` 14px 400 | 8 |
-| error | `#B12C4D` w1.5 | texto `#2C46B1` 14px 400 | 8 |
-
-> Estrutura: Label (10px uppercase, 400) + Input 48px + mensagem de erro opcional
-> (16px, com ícone `Warning`). Altura do componente: 70px sem erro, 94px com erro.
-
----
-
-## 4. Telas
-
-Fundo de todas as telas: **`#E4E5EB`** (gray-100).
-
-### `/` — Home (Links)
-
-- **Header**: Logo `brev.ly` (ícone + Quicksand 700) à esquerda.
-- **"Novo link"** (380×340 desktop / 366×316 mobile):
-  - Título `text-lg` 700;
-  - Form com 2 inputs (URL original + short code opcional) + Button primary full-width (48px).
-- **"Meus links"** (580×396 desktop / 366×348 mobile):
-  - Header com título + Button secondary (DownloadSimple + "CSV");
-  - Lista com rows 42px separadas por divider (`#E4E5EB`):
-    - Link encurtado `#2C46B1` 14px 600;
-    - URL original truncada 12px 400 `#4C4F5B`;
-    - Contador "N acessos" 12px 400 `#4C4F5B`;
-    - Ações: Copy + Trash (icon buttons).
-
-### `/` — Home (Empty state)
-
-Mesmo layout, mas a lista mostra placeholder: ícone `Link` 32×32 + texto "Placeholder".
-
-### `/:url-encurtada` — Redirect
-
-- Logo_Icon 48×48;
-- "Redirecionando..." `text-xl` 700;
-- "O link será aberto automaticamente em alguns instantes."
-- "Não foi redirecionado? Acesse aqui" (link manual).
-
-### `*` — Not Found
-
-- Ilustração "404" (vetorial);
-- "Link não encontrado" `text-xl` 700;
-- "O link que você está tentando acessar não existe, foi removido ou é uma URL inválida. Saiba mais em brev.ly."
-
-### Breakpoints
-
-- **Desktop**: telas 1366×720.
-- **Mobile**: telas 390×788/784. Colunas/fontes ajustam (ex.: inputs 318px).
-
----
-
-## 5. Stack de implementação (web/)
-
-- TailwindCSS v3 (mobile-first).
-- Fonte: Open Sans via Google Fonts no `index.html`.
-- Ícones: lucide-react (substitutos de Phosphor: `Copy`, `Trash2`, `TriangleAlert`,
-  `Download`, `Link`, `Scissors`).
+Detalhes de estados e layout em [`design-spec.md`](./design-spec.md).
