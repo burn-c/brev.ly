@@ -33,16 +33,30 @@
 - **Ids:** uuid v7 via `uuidv7` (ADR-001).
 - **Pendências:** Dockerfile (F5), storage em produção real (F6/7).
 
-### `web/` — Front-end (React + Vite + TS + Tailwind) 🔄 refinamento de layout em andamento
+### `web/` — Front-end (React + Vite + TS + Tailwind) 🎨 design system pronto · 🔨 Fase 4 pendente
 
 - **Scaffold pronto** (React 19, Vite, TanStack Query, RHF, Zod, React Router, Biome).
-- **Refinamento de layout** em andamento pelo **agente de design** (design tokens do Figma): [`web/docs/design-tokens.md`](../web/docs/design-tokens.md) e [`web/docs/design-spec.md`](../web/docs/design-spec.md).
+- **Design system extraído do Figma ✅ concluído**: tokens, spec das 8 telas e assets commitados.
+  - [`web/docs/design-tokens.md`](../web/docs/design-tokens.md) — tokens oficiais do Style Guide (`blue-base`, `blue-dark`, `gray-100..600`, `danger`), já aplicados no `tailwind.config.js`.
+  - [`web/docs/design-spec.md`](../web/docs/design-spec.md) — spec detalhada das telas (Links/Empty/Redirect/Not Found × desktop/mobile) e componentes (Button primary/secondary, Icon Button, Input).
+  - [`web/assets/`](../web/assets/) — `Logo.svg`, `Logo_Icon.svg`, `404.svg` (com `<title>` acessível).
+- **Acesso ao Figma:** ver [seção "Acesso ao Figma"](#acesso-ao-figma) abaixo — fonte de verdade visual (checklist item 24).
+- **Fase 4 pendente:** implementar páginas `/`, `/:url-encurtada`, `*` (404) guiadas pelo `design-spec.md`; fluxos de criar/listar/deletar/redirecionar/CSV; empty state, loading, bloqueio de ações, responsividade.
 - **Regra:** agentes de layout devem atualizar esta seção e os docs de `web/docs/` a cada avanço.
 
 ### `infra/` — Infraestrutura (Pulumi) ⏳ esqueleto
 
 - Projeto Pulumi `brevly-infra` criado; stack `brevly-prod` **ainda não inicializada** (Fase 6).
 - Estado planejado: `s3://burn-pulumi-state` (centralizado), região `us-east-1`, conta `488182246611` (ADR-006).
+
+## Acesso ao Figma
+
+**Registrado em um único lugar (aqui).** Demais documentos apenas referenciam esta seção.
+
+- **MCP:** servidor `figma` via `figma-developer-mcp` (`--stdio`), configurado **globalmente** no opencode (`~/.config/opencode/opencode.json`) com o token no `environment` — **não versionado no repo**.
+- **Arquivo:** `https://www.figma.com/design/WV2Kpt6RdFhUJHV9lCfMGU/` — **"Encurtador de Links (Community)"** (duplicado nos Drafts do usuário).
+- **Uso:** antes de implementar/refinar a UI (Fase 4), consultar o Figma (Style Guide + páginas do Projeto) e conferir com [`web/docs/design-tokens.md`](../web/docs/design-tokens.md) e [`web/docs/design-spec.md`](../web/docs/design-spec.md).
+- **Nota:** o endpoint remoto `mcp.figma.com` **não aceita** clientes fora da Figma MCP Catalog — usar o `figma-developer-mcp` local (REST API) via o MCP `figma` acima.
 
 ## Gotchas operacionais (armadilhas já descobertas)
 
