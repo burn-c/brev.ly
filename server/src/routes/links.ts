@@ -37,7 +37,7 @@ export async function linksRoutes(app: FastifyInstance, opts: LinksRoutesOptions
   app.post("/links", async (request, reply) => {
     const parsed = createLinkSchema.safeParse(request.body)
     if (!parsed.success) {
-      return reply.code(400).send({ message: "Invalid request body" })
+      return reply.code(400).send({ message: "Corpo da requisição inválido" })
     }
 
     try {
@@ -57,7 +57,7 @@ export async function linksRoutes(app: FastifyInstance, opts: LinksRoutesOptions
   app.get("/links", async (request, reply) => {
     const parsed = listLinksQuerySchema.safeParse(request.query)
     if (!parsed.success) {
-      return reply.code(400).send({ message: "Invalid query parameters" })
+      return reply.code(400).send({ message: "Parâmetros de consulta inválidos" })
     }
 
     return linksService.listLinks(parsed.data.page, parsed.data.pageSize)
@@ -66,7 +66,7 @@ export async function linksRoutes(app: FastifyInstance, opts: LinksRoutesOptions
   app.get("/links/:shortCode", async (request, reply) => {
     const parsed = shortCodeParamsSchema.safeParse(request.params)
     if (!parsed.success) {
-      return reply.code(400).send({ message: "Invalid short code" })
+      return reply.code(400).send({ message: "URL encurtada mal formatada" })
     }
 
     try {
@@ -83,7 +83,7 @@ export async function linksRoutes(app: FastifyInstance, opts: LinksRoutesOptions
   app.delete("/links/:id", async (request, reply) => {
     const parsed = idParamsSchema.safeParse(request.params)
     if (!parsed.success) {
-      return reply.code(400).send({ message: "Invalid link id" })
+      return reply.code(400).send({ message: "ID do link inválido" })
     }
 
     try {
@@ -100,7 +100,7 @@ export async function linksRoutes(app: FastifyInstance, opts: LinksRoutesOptions
   app.patch("/links/:id/access", async (request, reply) => {
     const parsed = idParamsSchema.safeParse(request.params)
     if (!parsed.success) {
-      return reply.code(400).send({ message: "Invalid link id" })
+      return reply.code(400).send({ message: "ID do link inválido" })
     }
 
     try {
