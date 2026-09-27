@@ -160,7 +160,7 @@ const database = new aws.rds.Instance("brevly-db", {
   password: config.requireSecret("dbPassword"),
   dbSubnetGroupName: dbSubnetGroup.name,
   skipFinalSnapshot: true,
-  backupRetentionPeriod: 7,
+  backupRetentionPeriod: 0,
   storageEncrypted: true,
   publiclyAccessible: false,
   tags: commonTags,
