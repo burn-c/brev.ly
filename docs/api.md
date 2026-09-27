@@ -11,6 +11,7 @@ Contratos da API REST do Brev.ly (Fastify). Base URL: `http://localhost:3333` (v
 | `GET` | `/links/:shortCode` | Obter link pela URL encurtada | `200` link completo | `404` |
 | `DELETE` | `/links/:id` | Deletar link | `204` | `400` id inválido · `404` |
 | `PATCH` | `/links/:id/access` | Incrementar acessos | `200` `{ accessCount }` | `400` id inválido · `404` |
+| `GET` | `/reports/links.csv` | Exportar links em CSV via CDN | `200` `{ url }` | `500` storage não configurado |
 | `GET` | `/health` | Health check | `200` `{ status, timestamp }` | — |
 
 > Delete e incremento usam `id` (uuid v7). O `shortCode` é usado apenas no lookup de redirecionamento (`GET /links/:shortCode`), que é idempotente (não incrementa). Ver [`decisions.md`](./decisions.md).
@@ -82,6 +83,17 @@ curl -X PATCH http://localhost:3333/links/01a0e412-.../access
 curl -X DELETE http://localhost:3333/links/01a0e412-...
 # 204 (sem corpo)
 ```
+
+### Exportar CSV (relatório)
+
+```bash
+curl http://localhost:3333/reports/links.csv
+# 200 → { "url": "http://cdn.example.com/reports-<uuid>.csv" }
+```
+
+- Gera o CSV com os campos `url_original,url_encurtada,contagem_de_acessos,data_de_criacao`, consultando os links em lotes (performático).
+- Faz upload para o storage (S3 ou R2) com **nome aleatório e único** (`<uuid>.csv`) e retorna a **URL pública via CDN**.
+- Provider selecionado por `STORAGE_PROVIDER` (`cloudflare` | `aws`); para S3-compatíveis custom, use `AWS_ENDPOINT`.
 
 ## Modelo de dados (JSON)
 
