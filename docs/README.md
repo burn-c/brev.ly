@@ -7,8 +7,9 @@
 | Documento | Descrição |
 |---|---|
 | `../spec.md` | Spec completo do projeto (requisitos, checklist de compliance, arquitetura, API, infra) |
+| [`status.md`](./status.md) | **Memória de execução** — estado das fases, subprojetos, gotchas operacionais e próximos passos |
 | [`workflow.md`](./workflow.md) | Padrões e fluxo de desenvolvimento (ciclo por tarefa, commits, verificação, documentação) |
-| [`decisions.md`](./decisions.md) | ADRs — registro das decisões técnicas (identificador, redirect, short code, deploy, storage, estado Pulumi) |
+| [`decisions.md`](./decisions.md) | ADRs — decisões técnicas com alternativas consideradas e o porquê (identificador, redirect, short code, deploy, storage, estado Pulumi) |
 | [`api.md`](./api.md) | Contratos da API, exemplos e códigos de erro |
 | [`database.md`](./database.md) | Schema, migrations e comandos `db:migrate` |
 | `docker.md` | Dockerfile, docker-compose e comandos úteis (pendente — Fase 5) |

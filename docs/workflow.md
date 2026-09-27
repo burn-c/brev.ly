@@ -79,9 +79,10 @@ Estrutura em [`docs/`](./README.md), sempre em PT-BR:
 
 Atualizar documentação apenas quando a mudança for visível/externa:
 
+- **Estado de execução** → [`status.md`](./status.md) (fases, gotchas, próximos passos) — **sempre** que algo mudar;
 - Nova rota/contrato de API → `docs/api.md`;
 - Mudança de schema/migrations → `docs/database.md`;
 - Mudança de build/container → `docs/docker.md`;
 - Mudança de deploy/infra → `docs/deploy.md`, `docs/infra-pulumi.md`, `docs/ci-cd.md`;
-- Decisão técnica relevante → `docs/decisions.md` (ADR);
+- Decisão técnica relevante → `docs/decisions.md` (ADR com alternativas consideradas e o porquê);
 - Mudança notável de comportamento → `CHANGELOG.md`.
