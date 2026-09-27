@@ -115,8 +115,6 @@ jobs:
         name: Setup Node.js
         with:
           node-version: 22
-          cache: pnpm
-          cache-dependency-path: server/pnpm-lock.yaml
 
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
