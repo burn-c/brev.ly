@@ -2,6 +2,12 @@
 
 Todas as mudanças notáveis do projeto serão documentadas neste arquivo, seguindo o estilo [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [0.3.2] - 2026-09-27
+
+### Alterado
+
+- **`web/docs/design-spec.md` e `web/docs/design-tokens.md` reconciliados com o Figma** (análise de fidelidade): corrigidos o label do input (`gray-500`, não `gray-400`), o texto do empty state (`gray-500` + CAIXA ALTA) e as dimensões dos botões (primary full-width 316/318, secondary `hug` ~100–104px). Documentados itens ausentes: botões desabilitados no empty state, fallback links sublinhados em `blue-base` ("Acesse aqui" e "brev.ly"), gaps da listagem mobile, inputs preenchidos no desktop e a cor base `#000000` dos ícones Phosphor (via `currentColor`).
+
 ## [0.3.1] - 2026-09-27
 
 ### Adicionado

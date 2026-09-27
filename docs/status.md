@@ -39,6 +39,7 @@
 - **Design system extraído do Figma ✅ concluído**: tokens, spec das 8 telas e assets commitados.
   - [`web/docs/design-tokens.md`](../web/docs/design-tokens.md) — tokens oficiais do Style Guide (`blue-base`, `blue-dark`, `gray-100..600`, `danger`), já aplicados no `tailwind.config.js`.
   - [`web/docs/design-spec.md`](../web/docs/design-spec.md) — spec detalhada das telas (Links/Empty/Redirect/Not Found × desktop/mobile) e componentes (Button primary/secondary, Icon Button, Input).
+  - **Revisão de fidelidade (2026-09-27):** spec reconciliada com o canvas do Figma — corrigidos label do input (`gray-500`), empty state (`gray-500`/CAIXA ALTA), dimensões dos botões (primary full-width, secondary `hug`); documentados botões disabled no empty state, fallback links sublinhados (`blue-base`), gaps da listagem mobile, inputs preenchidos no desktop e cor base `#000000` dos ícones Phosphor (usar `currentColor`).
   - [`web/assets/`](../web/assets/) — `Logo.svg`, `Logo_Icon.svg`, `404.svg` (com `<title>` acessível).
 - **Acesso ao Figma:** ver [seção "Acesso ao Figma"](#acesso-ao-figma) abaixo — fonte de verdade visual (checklist item 24).
 - **Fase 4 pendente:** implementar páginas `/`, `/:url-encurtada`, `*` (404) guiadas pelo `design-spec.md`; fluxos de criar/listar/deletar/redirecionar/CSV; empty state, loading, bloqueio de ações, responsividade.

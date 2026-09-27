@@ -12,16 +12,19 @@ Nomes oficiais definidos no Style Guide do Figma.
 
 | Token | Hex | Uso |
 |---|---|---|
-| `blue-base` | `#2C46B1` | Primary — botão, links, active/error input, ícone logo |
+| `blue-base` | `#2C46B1` | Primary — botão, links, active/error input, ícone logo, fallback links (underline) |
 | `blue-dark` | `#2C4091` | Hover do botão primary |
-| `white` | `#FFFFFF` | Texto sobre primary, ícones |
+| `white` | `#FFFFFF` | Texto sobre primary |
 | `gray-100` | `#F9F9FB` | Fundo dos cards (superfícies) |
 | `gray-200` | `#E4E6EC` | **Fundo das telas**, botão secondary, icon button, dividers |
 | `gray-300` | `#CDCFD5` | Border input default |
-| `gray-400` | `#74798B` | Placeholder / label / empty text |
-| `gray-500` | `#4D505C` | Texto secundário (acessos, URL original) |
-| `gray-600` | `#1F2025` | Texto principal (títulos) |
+| `gray-400` | `#74798B` | Placeholder |
+| `gray-500` | `#4D505C` | Label do input, texto secundário (acessos, URL original), label secondary button, texto empty state, error message |
+| `gray-600` | `#1F2025` | Texto principal (títulos, texto do input preenchido) |
 | `danger` | `#B12C4D` | Estado de erro do input |
+| `black` | `#000000` | Vetor base dos ícones Phosphor (Copy, Trash, DownloadSimple, Warning, Link) — cor efetiva via `currentColor` |
+
+> **Ícones:** no Style Guide, o vetor base dos ícones Phosphor é `#000000` (não `white`). Nas telas eles aparecem como instâncias `IMAGE-SVG` sem override de fill — a cor renderizada vem do vetor. Ao implementar com lucide-react, usar `currentColor` (padrão) herdando a cor do contexto (ex.: sobre `gray-200`, o ícone permanece escuro).
 
 ### Valores renderizados (pixel-accurate)
 
