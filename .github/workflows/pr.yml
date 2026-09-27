@@ -113,24 +113,6 @@ jobs:
           cache: pnpm
           cache-dependency-path: infra/pnpm-lock.yaml
 
-      - name: Debug OIDC token claims
-        run: |
-          python3 - <<'PYEOF'
-          import base64, json, os, subprocess, urllib.request
-
-          req = urllib.request.Request(
-              os.environ["ACTIONS_ID_TOKEN_REQUEST_URL"] + "&audience=sts.amazonaws.com",
-              headers={"Authorization": f"Bearer {os.environ['ACTIONS_ID_TOKEN_REQUEST_TOKEN']}"},
-          )
-          raw = json.loads(urllib.request.urlopen(req).read())["value"]
-          payload = raw.split(".")[1]
-          payload += "=" * (-len(payload) % 4)
-          claims = json.loads(base64.urlsafe_b64decode(payload))
-          print("SUB:", claims.get("sub"))
-          print("AUD:", claims.get("aud"))
-          print("ISS:", claims.get("iss"))
-          PYEOF
-
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -147,6 +129,7 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         run: |
           AWS_REGION=us-east-1 pulumi login s3://brevly-pulumi-state
+          AWS_REGION=us-east-1 PULUMI_CONFIG_PASSPHRASE="" pulumi stack select brevly-prod
           AWS_REGION=us-east-1 PULUMI_CONFIG_PASSPHRASE="" pulumi config set brevly-infra:accountId 488182246611
           AWS_REGION=us-east-1 PULUMI_CONFIG_PASSPHRASE="" pulumi config set --secret brevly-infra:dbPassword "$DB_PASSWORD"
 
