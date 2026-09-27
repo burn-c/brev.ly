@@ -83,7 +83,7 @@ const cdnDistribution = new aws.cloudfront.Distribution("brevly-cdn", {
   origins: [
     {
       originId: "brevly-frontend-origin",
-      domainName: frontendBucket.bucketRegionalDomainName,
+      domainName: pulumi.interpolate`${frontendBucket.bucket}.s3.${region}.amazonaws.com`,
     },
   ],
   defaultCacheBehavior: {
