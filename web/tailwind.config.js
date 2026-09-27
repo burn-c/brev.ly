@@ -23,7 +23,11 @@ export default {
         logo: ["Quicksand", "sans-serif"],
       },
       fontSize: {
-        xxs: "0.625rem",
+        xxs: ["0.625rem", { lineHeight: "0.875rem" }],
+        xs: ["0.75rem", { lineHeight: "1rem" }],
+        sm: ["0.875rem", { lineHeight: "1.125rem" }],
+        lg: ["1.125rem", { lineHeight: "1.5rem" }],
+        xl: ["1.5rem", { lineHeight: "2rem" }],
       },
     },
   },

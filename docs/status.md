@@ -16,7 +16,7 @@
 - [x] Fase 1 — Setup (monorepo `web/` + `server/` + `infra/`, tooling, envs)
 - [x] Fase 2 — Back-end (Drizzle + Postgres, migrations, CRUD)
 - [x] Fase 3 — CSV/CDN (storage S3/R2, exportação CSV)
-- [ ] Fase 4 — Front-end (páginas, UX, responsividade)
+- [~] Fase 4 — Front-end (páginas `/`, `/:url-encurtada`, `*`; fluxos; UX; responsividade) — implementado, falta revisão visual final
 - [ ] Fase 5 — Docker (Dockerfile, docker-compose)
 - [ ] Fase 6 — Infra (Pulumi: VPC/ECS/RDS/S3/CloudFront)
 - [ ] Fase 7 — CI/CD (GitHub Actions + OIDC)
@@ -33,7 +33,7 @@
 - **Ids:** uuid v7 via `uuidv7` (ADR-001).
 - **Pendências:** Dockerfile (F5), storage em produção real (F6/7).
 
-### `web/` — Front-end (React + Vite + TS + Tailwind) 🎨 design system pronto · 🔨 Fase 4 pendente
+### `web/` — Front-end (React + Vite + TS + Tailwind) 🎨 design system pronto · 🔨 Fase 4 em andamento
 
 - **Scaffold pronto** (React 19, Vite, TanStack Query, RHF, Zod, React Router, Biome).
 - **Design system extraído do Figma ✅ concluído**: tokens, spec das 8 telas e assets commitados.
@@ -41,8 +41,7 @@
   - [`web/docs/design-spec.md`](../web/docs/design-spec.md) — spec detalhada das telas (Links/Empty/Redirect/Not Found × desktop/mobile) e componentes (Button primary/secondary, Icon Button, Input).
   - **Revisão de fidelidade (2026-09-27):** spec reconciliada com o canvas do Figma — corrigidos label do input (`gray-500`), empty state (`gray-500`/CAIXA ALTA), dimensões dos botões (primary full-width, secondary `hug`); documentados botões disabled no empty state, fallback links sublinhados (`blue-base`), gaps da listagem mobile, inputs preenchidos no desktop e cor base `#000000` dos ícones Phosphor (usar `currentColor`).
   - [`web/assets/`](../web/assets/) — `Logo.svg`, `Logo_Icon.svg`, `404.svg` (com `<title>` acessível).
-- **Acesso ao Figma:** ver [seção "Acesso ao Figma"](#acesso-ao-figma) abaixo — fonte de verdade visual (checklist item 24).
-- **Fase 4 pendente:** implementar páginas `/`, `/:url-encurtada`, `*` (404) guiadas pelo `design-spec.md`; fluxos de criar/listar/deletar/redirecionar/CSV; empty state, loading, bloqueio de ações, responsividade.
+- **Fase 4 em andamento (2026-09-27):** páginas implementadas — `/` (HomePage: formulário RHF+Zod, listagem TanStack Query, delete, CSV, empty/loading/skeleton, copy), `/:url-encurtada` (RedirectPage: GET → PATCH access → `window.location`, fallback "Acesse aqui", 404 → NotFoundPage), `*` (NotFoundPage com 404.svg). Componentes: `Button` (primary/secondary), `IconButton`, `Input` (default/active/error + Warning), `Logo`/`LogoIcon`, `Toast` (Provider + `useToast`). Cliente API em `src/lib/api.ts`. Verificação (lint/typecheck/build) verde.
 - **Regra:** agentes de layout devem atualizar esta seção e os docs de `web/docs/` a cada avanço.
 
 ### `infra/` — Infraestrutura (Pulumi) ⏳ esqueleto
@@ -90,7 +89,7 @@
 
 ## Próximos passos
 
-1. **Fase 4 — Front-end:** páginas `/`, `/:url-encurtada`, `*` (404), seguindo os design tokens de `web/docs/`; fluxos de criar/listar/deletar/redirecionar/CSV; empty state, loading, responsividade.
+1. **Fase 4 — Front-end (finalização):** revisão visual das páginas contra o `design-spec.md` (Desktop 1366×720 e Mobile 390px), ajustes finos de fidelidade, testes manuais dos fluxos (criar/listar/deletar/redirecionar/CSV) e marcação como concluída.
 2. Fase 5 — Docker (Dockerfile multi-stage + docker-compose).
 3. Fase 6 — Pulumi (stack `brevly-prod`, recursos AWS).
 4. Fase 7 — CI/CD (GitHub Actions, OIDC).

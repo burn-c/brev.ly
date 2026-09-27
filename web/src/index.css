@@ -3,9 +3,9 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
-  background-color: #09090b;
-  color: #fafafa;
+  color-scheme: light;
+  background-color: #e4e5eb;
+  color: #1f2025;
 }
 
 body {

@@ -2,6 +2,18 @@
 
 Todas as mudanças notáveis do projeto serão documentadas neste arquivo, seguindo o estilo [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [0.4.0] - 2026-09-27
+
+### Adicionado
+
+- **Páginas do Front-end (Fase 4)**, guiadas pelo `web/docs/design-spec.md` extraído do Figma:
+  - **Home `/`** — formulário "Novo link" (React Hook Form + Zod: URL http/https obrigatória, short code opcional `^[a-zA-Z0-9]{1,10}$`, erros PT-BR), listagem "Meus links" (TanStack Query) com skeleton de loading, empty state ("ainda não existem links cadastrados"), erro com retry, ações de copiar (clipboard) e excluir (com confirmação), botão "Baixar CSV" (abre a URL pública da CDN), feedback via toasts.
+  - **Redirect `/:url-encurtada`** — fluxo no front (ADR-002): busca o link (`GET /links/:shortCode`), incrementa acessos (`PATCH /links/:id/access`) e redireciona via `window.location`; fallback manual "Acesse aqui" (sublinhado `blue-base`); 404 → página Not Found.
+  - **Not Found `*`** — ilustração `404.svg` + "Link não encontrado".
+- **Componentes de UI**: `Button` (primary/secondary com estados hover/disabled), `IconButton` (32×32), `Input` (label uppercase `gray-500`, estados default/active/error com ícone Warning), `Logo`/`LogoIcon` (assets SVG), `Toast` (Provider + hook `useToast`, sucesso/erro).
+- **Cliente de API** (`web/src/lib/api.ts`): `listLinks`, `createLink`, `getLinkByShortCode`, `deleteLink`, `incrementAccess`, `getCsvUrl`, `buildShortUrl`, `ApiError`.
+- **Tokens de tipografia** no Tailwind com alturas de linha exatas do Figma (10/12/14/18/24px).
+
 ## [0.3.2] - 2026-09-27
 
 ### Alterado
