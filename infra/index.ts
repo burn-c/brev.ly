@@ -280,6 +280,7 @@ const fargateService = new awsx.ecs.FargateService("brevly-server", {
 
 export const frontendBucketName = frontendBucket.bucket
 export const cdnUrl = pulumi.interpolate`https://${cdnDistribution.domainName}`
+export const cdnDistributionId = cdnDistribution.id
 export const apiUrl = pulumi.interpolate`http://${alb.loadBalancer.dnsName}`
 export const databaseEndpoint = database.endpoint
 export const ecrRepositoryUrl = repository.url

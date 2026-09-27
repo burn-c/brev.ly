@@ -2,6 +2,23 @@
 
 Todas as mudanças notáveis do projeto serão documentadas neste arquivo, seguindo o estilo [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [0.7.0] - 2026-09-27
+
+### Adicionado
+
+- **Workflows GitHub Actions (Fase 7)**:
+  - `pr.yml` — validação de PR: Server (lint/format/typecheck/test/build) + Web (lint/format/typecheck/build) + **Pulumi preview** (`brevly-prod`).
+  - `deploy.yml` — deploy em `main`: build+push da imagem do server → **ECR** (tag `sha`) → **`pulumi up`** → **`db:migrate`** → sync do web → **S3** + invalidação **CloudFront**.
+- **Autenticação AWS via OIDC** (`configure-aws-credentials` com `role-to-assume`), sem credenciais estáticas.
+- **Export `cdnDistributionId`** no `infra/index.ts` (para a invalidação do CloudFront no deploy).
+- **`docs/ci-cd.md`** com visão geral, pré-requisitos (role OIDC + secrets) e notas operacionais.
+
+### Observações
+
+- Para ativar os pipelines: criar o repositório público `brev.ly`, a role OIDC `GitHubActionsOIDCRole` (trust para o repo) e os secrets `AWS_OIDC_ROLE_ARN` + `DB_PASSWORD`.
+- A config da stack Pulumi é recriada no CI (`accountId` + `dbPassword`) — não versionada (repo público).
+- `VITE_BACKEND_URL`/`VITE_FRONTEND_URL` apontam para `api.brevly.com.br`/`cdn.brevly.com.br` no build de deploy.
+
 ## [0.6.0] - 2026-09-27
 
 ### Adicionado

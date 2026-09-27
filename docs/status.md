@@ -19,7 +19,7 @@
 - [~] Fase 4 — Front-end (páginas `/`, `/:url-encurtada`, `*`; fluxos; UX; responsividade) — implementado, falta revisão visual final
 - [x] Fase 5 — Docker (Dockerfile multi-stage + docker-compose local)
 - [x] Fase 6 — Infra (Pulumi: VPC/ECS/RDS/S3/CloudFront, stack `brevly-prod` — `preview` validado, 50 recursos)
-- [ ] Fase 7 — CI/CD (GitHub Actions + OIDC)
+- [~] Fase 7 — CI/CD (GitHub Actions + OIDC) — workflows criados, falta criar repo público + role OIDC + secrets
 - [ ] Fase 8 — Testes (suíte completa)
 - [ ] Fase 9 — Entrega (checklist 26 itens, README, submissão)
 
@@ -100,11 +100,11 @@
 
 ## Próximos passos
 
-1. **Fase 4 — Front-end (finalização):** revisão visual das páginas contra o `design-spec.md` (Desktop 1366×720 e Mobile 390px), ajustes finos de fidelidade, testes manuais dos fluxos (criar/listar/deletar/redirecionar/CSV) e marcação como concluída.
-2. **Fase 6 — aplicar a infra** (`pulumi up`) quando for fazer o deploy real: emitir o certificado ACM (validação DNS), push da imagem ECR, migrations no RDS e sync do front no S3. Ver [`deploy.md`](./deploy.md).
-3. Fase 7 — CI/CD (GitHub Actions, OIDC).
+1. **Fase 7 — CI/CD (finalizar):** criar o repositório público `brev.ly`, a role OIDC `GitHubActionsOIDCRole` e os secrets `AWS_OIDC_ROLE_ARN` + `DB_PASSWORD`; validar os pipelines em um PR real. Ver [`ci-cd.md`](./ci-cd.md).
+2. **Aplicar a infra** (`pulumi up`) quando for fazer o deploy real: emitir o certificado ACM (validação DNS), push da imagem ECR, migrations no RDS e sync do front no S3. Ver [`deploy.md`](./deploy.md).
+3. Fase 4 — Front-end (finalização): revisão visual contra o `design-spec.md` (Desktop 1366×720 e Mobile 390px) e testes manuais dos fluxos.
 4. Fase 8 — Testes e2e/aceite.
-5. Fase 9 — Entrega (repositório público, push, submissão FTR).
+5. Fase 9 — Entrega (repo público, push, submissão FTR).
 
 ## Como atualizar este documento
 

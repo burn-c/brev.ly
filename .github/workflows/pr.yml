@@ -1,0 +1,142 @@
+name: PR Check
+
+on:
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: pr-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  server:
+    name: Server (lint, typecheck, test, build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 11.9.0
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        name: Setup Node.js
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: server/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: server
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        working-directory: server
+        run: pnpm lint
+
+      - name: Format check
+        working-directory: server
+        run: pnpm format:check
+
+      - name: Typecheck
+        working-directory: server
+        run: pnpm typecheck
+
+      - name: Test
+        working-directory: server
+        run: pnpm test
+
+      - name: Build
+        working-directory: server
+        run: pnpm build
+
+  web:
+    name: Web (lint, format, typecheck, build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 11.9.0
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        name: Setup Node.js
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: web
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        working-directory: web
+        run: pnpm lint
+
+      - name: Format check
+        working-directory: web
+        run: pnpm format:check
+
+      - name: Typecheck
+        working-directory: web
+        run: pnpm typecheck
+
+      - name: Build
+        working-directory: web
+        run: pnpm build
+
+  preview:
+    name: Pulumi preview (brevly-prod)
+    runs-on: ubuntu-latest
+    needs: [server, web]
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 11.9.0
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        name: Setup Node.js
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: infra/pnpm-lock.yaml
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Install dependencies
+        working-directory: infra
+        run: pnpm install --frozen-lockfile
+
+      - name: Set stack config
+        working-directory: infra
+        env:
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        run: |
+          AWS_REGION=us-east-1 pulumi login s3://brevly-pulumi-state
+          AWS_REGION=us-east-1 PULUMI_CONFIG_PASSPHRASE="" pulumi config set brevly-infra:accountId 488182246611
+          AWS_REGION=us-east-1 PULUMI_CONFIG_PASSPHRASE="" pulumi config set --secret brevly-infra:dbPassword "$DB_PASSWORD"
+
+      - name: Pulumi preview
+        working-directory: infra
+        env:
+          AWS_REGION: us-east-1
+          PULUMI_CONFIG_PASSPHRASE: ""
+        run: pulumi preview -s brevly-prod

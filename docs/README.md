@@ -17,6 +17,7 @@
 | [Design spec (web)](../web/docs/design-spec.md) | Spec das telas e componentes extraída do Figma (8 telas, estados, layout) |
 | [`deploy.md`](./deploy.md) | Passo a passo do deploy AWS (ECS/RDS/S3/CloudFront) |
 | [`infra-pulumi.md`](./infra-pulumi.md) | Stack `brevly-prod`, estado S3, preview/up |
+| [`ci-cd.md`](./ci-cd.md) | Workflows GitHub Actions (OIDC, PR preview, deploy main) |
 | `ci-cd.md` | Workflows GitHub Actions, OIDC, fluxo PR/main (pendente — Fase 7) |
 
 ## Convenções

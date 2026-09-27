@@ -1,0 +1,195 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: deploy-main
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: brevly-server
+  S3_BUCKET: brevly-frontend-web
+
+jobs:
+  build-and-push-server:
+    name: Build & push server image (ECR)
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        id: meta
+        env:
+          REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t "$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" server/
+          docker push "$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          echo "tag=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
+
+  pulumi-up:
+    name: Pulumi up (brevly-prod)
+    runs-on: ubuntu-latest
+    needs: build-and-push-server
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 11.9.0
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        name: Setup Node.js
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: infra/pnpm-lock.yaml
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Install dependencies
+        working-directory: infra
+        run: pnpm install --frozen-lockfile
+
+      - name: Set stack config
+        working-directory: infra
+        env:
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        run: |
+          AWS_REGION=us-east-1 pulumi login s3://brevly-pulumi-state
+          AWS_REGION=us-east-1 PULUMI_CONFIG_PASSPHRASE="" pulumi config set brevly-infra:accountId 488182246611
+          AWS_REGION=us-east-1 PULUMI_CONFIG_PASSPHRASE="" pulumi config set --secret brevly-infra:dbPassword "$DB_PASSWORD"
+
+      - name: Pulumi up
+        working-directory: infra
+        env:
+          AWS_REGION: us-east-1
+          PULUMI_CONFIG_PASSPHRASE: ""
+        run: pulumi up -s brevly-prod --yes
+
+  migrate:
+    name: Run db:migrate
+    runs-on: ubuntu-latest
+    needs: pulumi-up
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 11.9.0
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        name: Setup Node.js
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: server/pnpm-lock.yaml
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Install dependencies
+        working-directory: server
+        run: pnpm install --frozen-lockfile
+
+      - name: Get database endpoint
+        working-directory: infra
+        env:
+          AWS_REGION: us-east-1
+          PULUMI_CONFIG_PASSPHRASE: ""
+        run: echo "DB_ENDPOINT=$(AWS_REGION=us-east-1 pulumi stack output databaseEndpoint -s brevly-prod)" >> "$GITHUB_ENV"
+
+      - name: Run migrations
+        working-directory: server
+        env:
+          PULUMI_CONFIG_PASSPHRASE: ""
+          DATABASE_URL: postgres://postgres:${{ secrets.DB_PASSWORD }}@${{ env.DB_ENDPOINT }}/brevly
+        run: pnpm db:migrate
+
+  deploy-web:
+    name: Deploy web (S3 + CloudFront)
+    runs-on: ubuntu-latest
+    needs: pulumi-up
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 11.9.0
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        name: Setup Node.js
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Install dependencies
+        working-directory: web
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        working-directory: web
+        env:
+          VITE_BACKEND_URL: https://api.brevly.com.br
+          VITE_FRONTEND_URL: https://cdn.brevly.com.br
+        run: pnpm build
+
+      - name: Sync to S3
+        run: aws s3 sync web/dist/ "s3://$S3_BUCKET" --delete
+
+      - name: Invalidate CloudFront
+        working-directory: infra
+        env:
+          AWS_REGION: us-east-1
+          PULUMI_CONFIG_PASSPHRASE: ""
+        run: |
+          DISTRIBUTION_ID=$(AWS_REGION=us-east-1 pulumi stack output cdnDistributionId -s brevly-prod)
+          aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/*"

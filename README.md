@@ -75,6 +75,6 @@ Fases do roadmap em [`spec.md`](./spec.md#10-roadmap):
 - [~] Fase 4 — Front-end (páginas `/`, `/:url-encurtada`, `*`; fluxos; UX) — implementado, aguardando revisão visual final
 - [x] **Fase 5 — Docker** (Dockerfile multi-stage + docker-compose local)
 - [x] **Fase 6 — Infra (Pulumi)** (VPC/ECS/RDS/S3/CloudFront, stack `brevly-prod` — preview validado)
-- [ ] Fase 7 — CI/CD
+- [~] Fase 7 — CI/CD (workflows criados; falta repo público + role OIDC + secrets)
 - [ ] Fase 8 — Testes
 - [ ] Fase 9 — Entrega
