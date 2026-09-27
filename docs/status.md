@@ -7,6 +7,7 @@
 ## Mapa rápido
 
 - **Repositório:** `brev.ly/` · branch `main` · commits diretos em `main`
+- **GitHub (público):** `https://github.com/burn-c/brev.ly` — publicado na Fase 7/9 após auditoria de segurança
 - **Contexto:** projeto avaliativo Pós-Graduação TD 360 (FTR Rocketseat) — [`spec.md`](../spec.md)
 - **Docs:** [`workflow.md`](./workflow.md) (padrões) · [`decisions.md`](./decisions.md) (ADRs) · [`api.md`](./api.md) · [`database.md`](./database.md)
 - **Instruções p/ agentes:** [`AGENTS.md`](../AGENTS.md)
@@ -101,7 +102,7 @@
 
 ## Próximos passos
 
-1. **Fase 7 — CI/CD (finalizar):** criar o repositório público `brev.ly`, a role OIDC `GitHubActionsOIDCRole` e os secrets `AWS_OIDC_ROLE_ARN` + `DB_PASSWORD`; validar os pipelines em um PR real. Ver [`ci-cd.md`](./ci-cd.md).
+1. **Fase 7 — CI/CD (ativar):** criar a role OIDC `GitHubActionsOIDCRole` (trust para `burn-c/brev.ly`) e os secrets `AWS_OIDC_ROLE_ARN` + `DB_PASSWORD`; validar os pipelines em um PR real. Ver [`ci-cd.md`](./ci-cd.md).
 2. **Aplicar a infra** (`pulumi up`) quando for fazer o deploy real: emitir o certificado ACM (validação DNS), push da imagem ECR, migrations no RDS e sync do front no S3. Ver [`deploy.md`](./deploy.md).
 3. Fase 4 — Front-end (finalização): revisão visual contra o `design-spec.md` (Desktop 1366×720 e Mobile 390px) e testes manuais dos fluxos.
 4. Fase 8 — Testes e2e/aceite.
