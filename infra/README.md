@@ -6,13 +6,13 @@ Infraestrutura como código (IaC) do **Brev.ly** usando [Pulumi](https://www.pul
 
 Provisiona a infraestrutura AWS do Brev.ly: front-end (S3 + CloudFront), back-end (ECR → ECS Fargate com ALB), banco (RDS PostgreSQL) e CDN para relatórios CSV.
 
-> **Status:** Fase 1 (Setup). Nesta fase o projeto contém apenas o esqueleto Pulumi — **nenhum recurso AWS é criado**. A infraestrutura real será implementada na **Fase 6**.
+> **Status:** Fase 6 concluída — programa completo em `index.ts`, stack `brevly-prod` inicializada e `pulumi preview` validado (50 recursos). Ver [`docs/infra-pulumi.md`](../docs/infra-pulumi.md).
 
 ## Stack
 
 - **Stack:** `brevly-prod`
 - **Região:** `us-east-1`
-- **Backend de estado:** `s3://burn-pulumi-state` (configuração adiada para a Fase 6)
+- **Backend de estado:** `s3://brevly-pulumi-state` (exclusivo do Brev.ly — ADR-009)
 
 ## Comandos
 
@@ -25,11 +25,12 @@ pnpm refresh        # pulumi refresh -s brevly-prod
 pnpm destroy        # pulumi destroy -s brevly-prod
 ```
 
-> Os comandos `preview`/`up`/`refresh`/`destroy` exigem credenciais AWS e backend de estado e serão utilizados a partir da Fase 6.
+> O login usa o backend S3: `AWS_REGION=us-east-1 pulumi login s3://brevly-pulumi-state` (bucket em us-east-1).
 
 ## Estrutura
 
 - `Pulumi.yaml` — metadados do projeto Pulumi
-- `index.ts` — programa Pulumi (vazio nesta fase)
-- `package.json` — dependências (`@pulumi/pulumi`, `@pulumi/aws`, `@pulumi/awsx`)
+- `Pulumi.brevly-prod.yaml` — config da stack (`accountId`, `dbPassword` secreto)
+- `index.ts` — programa Pulumi (VPC, storage, CDN, RDS, ECR, ECS+ALB)
+- `package.json` / `pnpm-workspace.yaml` — dependências e pinagem de versões
 - `tsconfig.json` — opções do TypeScript (strict)

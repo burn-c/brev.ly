@@ -2,3 +2,5 @@ allowBuilds:
   '@pulumi/docker': true
   '@pulumi/docker-build': true
   protobufjs: true
+overrides:
+  '@pulumi/aws': 7.35.0
