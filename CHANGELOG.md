@@ -2,6 +2,22 @@
 
 Todas as mudanças notáveis do projeto serão documentadas neste arquivo, seguindo o estilo [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [0.3.0] - 2026-09-27
+
+### Adicionado
+
+- **Provider de storage** (`src/storage/storage.ts`): abstração S3/R2 via `@aws-sdk/client-s3`, selecionada por `STORAGE_PROVIDER` (ADR-005). Configuração **lazy** (não quebra o app sem storage) e validação `buildS3ClientOptions`/`buildPublicUrl` testáveis. Client com `requestChecksumCalculation: "WHEN_REQUIRED"` para compatibilidade com provedores S3-compatíveis.
+- **Serviço de relatório CSV** (`src/services/report-service.ts`): exporta todos os links em lotes (página de 1000), gera CSV com escaping correto (`csvEscape`/`buildLinksCsv`), faz upload com nome aleatório (`<uuid>.csv`) e retorna a URL pública.
+- **Rota `GET /reports/links.csv`**: retorna `{ url }` do CSV na CDN.
+- **Env `AWS_ENDPOINT`** (opcional) para endpoints S3-compatíveis custom.
+- **Dependência** `@aws-sdk/client-s3`.
+- **Testes**: suíte subiu de 49 → **75** (storage: 17, report-service: 7, report route: 2 + anteriores).
+
+### Observações
+
+- A validação da integração de rede (upload real para S3/R2) será feita no deploy (Fase 6/7). Em ambiente local, o `s3mock` é incompatível com o AWS SDK v3 (v3 falha no parse XML; v2 não persiste objetos) e o MinIO/LocalStack estão bloqueados no registro Docker desta máquina — isso não afeta o código, que usa o mesmo SDK comprovado contra R2 no projeto de referência.
+- Checklist de compliance: itens 9–13 (CSV via CDN, nome único, listagem performática, campos do CSV) cobertos.
+
 ## [0.2.1] - 2026-09-27
 
 ### Corrigido
