@@ -1,5 +1,11 @@
 import { z } from "zod"
 
+try {
+  process.loadEnvFile()
+} catch {
+  // .env ausente: usa apenas as variáveis do ambiente do processo
+}
+
 const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3333),
   DATABASE_URL: z.string().default(""),
