@@ -82,6 +82,7 @@
 - **Pulumi — versões de plugin:** o CLI usa a versão do SDK que o programa importa; se houver resíduo de versões antigas no store pnpm (`node_modules/.pnpm/@pulumi+aws@*`), ele tenta baixar o plugin correspondente e trava em rede lenta. Fixar `@pulumi/aws`/`@pulumi/awsx` via `overrides` no `pnpm-workspace.yaml` + `rm -rf node_modules && pnpm install` resolve. Plugins já instalados ficam em `~/.pulumi/plugins`.
 - **Pulumi — login/região:** o bucket de estado `brevly-pulumi-state` está em `us-east-1`; rodar `AWS_REGION=us-east-1` junto com `pulumi` (o `~/.aws/config` usa `us-east-2`, causando `PermanentRedirect`).
 - **Pulumi — preview lento:** o `awsx.ec2.Vpc` gera ~30 recursos e o preview faz muitas chamadas AWS; pode levar 5–8 min. Não interromper — rodar em background e aguardar.
+- **Segurança pré-publicação (2026-09-27):** auditoria completa antes de criar o repo público — **nenhum segredo** em arquivos versionados nem no histórico (`.env` locais ignorados; `.env.example` só com placeholders; URLs `postgres://` nos docs são de dev local). O `Pulumi.brevly-prod.yaml` (com `dbPassword` criptografado) foi **removido do histórico via `git filter-branch`** (passphrase vazio) + `reflog expire` + `gc --prune` — os SHAs foram reescritos. Regra: **nunca commitar config de stack Pulumi nem `.env`**; a config da stack se recria com `pulumi config set`.
 - **S3 API:** `s3.BucketV2` está deprecado no `@pulumi/aws@7.35` → usar `s3.Bucket` (mesmas props).
 
 ## Decisões recentes
