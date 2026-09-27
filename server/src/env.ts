@@ -14,6 +14,7 @@ const envSchema = z.object({
   AWS_REGION: z.string().default(""),
   AWS_S3_BUCKET: z.string().default(""),
   AWS_CDN_URL: z.string().default(""),
+  AWS_ENDPOINT: z.string().default(""),
   FRONTEND_URL: z.string().default("http://localhost:5173"),
 })
 
