@@ -63,7 +63,7 @@ changelog: bump to 0.2.0
 
 Padronizados via `scripts` no `package.json` de cada subprojeto:
 
-- **`web/`**: `lint`, `format:check`, `typecheck`, `build`, `test`
+- **`web/`**: `lint`, `format:check`, `typecheck`, `build` (sem `test` até a Fase 8)
 - **`server/`**: `lint`, `format:check`, `typecheck`, `test`, `build`, `db:migrate`
 - **`infra/`**: `preview` / `up` via Pulumi CLI (stack `brevly-prod`)
 

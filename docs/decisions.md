@@ -206,3 +206,64 @@ Reutilizar o bucket **`s3://burn-pulumi-state`** como `cloud-url` do stack `brev
 
 - Um único local de estado para todos os stacks do curso.
 - Stack `brevly-prod` inicializado na Fase 6 com `cloud-url: s3://burn-pulumi-state`.
+
+---
+
+## ADR-007 — Carregamento de variáveis de ambiente
+
+- **Status:** Aceita
+- **Data:** 2026-09-27
+
+### Contexto
+
+O quickstart do README manda `cp .env.example .env && pnpm dev`, mas o server não carregava o `.env`: `env.ts` lia `process.env` diretamente e nenhum módulo importava `dotenv`, então `DATABASE_URL` ficava vazio e o primeiro query falhava.
+
+### Alternativas consideradas
+
+- **`dotenv`** (dependência extra, bastante usada).
+- **`process.loadEnvFile(".env")`** (API nativa do Node 20.12+ — zero dependência).
+
+### Decisão
+
+Usar `process.loadEnvFile()` no topo de `server/src/env.ts`, com try/catch para o caso de `.env` ausente (CI/deploy usam variáveis do ambiente do processo).
+
+### Por quê
+
+- **Zero dependência** — o runtime já oferece a API nativa.
+- Mantém o quickstart do README funcionando (`cp .env.example .env && pnpm dev`).
+- Sem comportamento quebrado em produção (variáveis injetadas pelo container continuam priorizadas — `.env` só é lido se existir).
+
+### Consequências
+
+- `pnpm dev`/`pnpm db:migrate` local carregam `.env` automaticamente.
+- Nenhuma nova dependência no `package.json`.
+
+---
+
+## ADR-008 — Erro 500 na exaustão do retry de short code
+
+- **Status:** Aceita
+- **Data:** 2026-09-27
+
+### Contexto
+
+O `spec.md` exige: auto-gerar short code em base62 (7 chars) com retry de até 5 tentativas em colisão; **esgotadas as tentativas, `500`**. Antes, a exaustão relançava `ShortCodeAlreadyExistsError`, que a rota mapeava para `409`.
+
+### Alternativas consideradas
+
+- **Manter `409`** (viola o spec; além disso, "URL encurtada já existente" é confuso no front, pois o usuário não escolheu o código).
+- **Novo erro `ShortCodeGenerationError` → `500`** (fiel ao spec e semanticamente correto).
+
+### Decisão
+
+Adicionar `ShortCodeGenerationError` (`server/src/errors/links-errors.ts`), lançado quando os 5 retries esgotam; a rota o deixa propagar como `500`. `ShortCodeAlreadyExistsError`/`409` fica reservado ao custom code informado pelo usuário.
+
+### Por quê
+
+- Fidelidade ao `spec.md` (item 3.1) e ao contrato da API.
+- Semântica correta: exaustão de geração não é "URL já existente".
+
+### Consequências
+
+- `POST /links` pode retornar `500` em caso raro de colisão contínua.
+- Testes cobrem o mapeamento (service + rota).

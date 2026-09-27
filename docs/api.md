@@ -6,7 +6,7 @@ Contratos da API REST do Brev.ly (Fastify). Base URL: `http://localhost:3333` (v
 
 | Método | Rota | Descrição | Sucesso | Erros |
 |---|---|---|---|---|
-| `POST` | `/links` | Criar link | `201` link criado | `400` formato inválido · `409` short code existente |
+| `POST` | `/links` | Criar link | `201` link criado | `400` formato inválido · `409` short code existente · `500` falha ao gerar short code |
 | `GET` | `/links` | Listar links (paginado) | `200` `{ data, meta }` | — |
 | `GET` | `/links/:shortCode` | Obter link pela URL encurtada | `200` link completo | `404` |
 | `DELETE` | `/links/:id` | Deletar link | `204` | `400` id inválido · `404` |
@@ -34,6 +34,7 @@ curl -X POST http://localhost:3333/links \
 - `shortCode` é opcional: se omitido, é **auto-gerado** (base62, 7 caracteres).
 - Formato válido: `^[a-zA-Z0-9]{1,10}$`.
 - `originalUrl` deve ser uma URL `http`/`https` válida.
+- Quando o short code é auto-gerado e todas as 5 tentativas de colisão se esgotam, retorna `500` (raro).
 
 ### Erros
 
@@ -109,4 +110,4 @@ type Link = {
 
 ## Validação
 
-Entradas validadas com **zod** (body/querystring/params) nas rotas, e regras de negócio no serviço (`src/services/links-service.ts`). CORS habilitado via `@fastify/cors` (origin `FRONTEND_URL`).
+Entradas validadas com **zod** (body/querystring/params) nas rotas, e regras de negócio no serviço (`src/services/links-service.ts`). CORS habilitado via `@fastify/cors` (origin `FRONTEND_URL`). Mensagens de erro em PT-BR.

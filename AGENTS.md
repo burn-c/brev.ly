@@ -34,6 +34,6 @@ Instruções operacionais para agentes que trabalham neste repositório. Leia o 
 
 ## Comandos úteis
 
-- Web: `pnpm lint` · `pnpm format:check` · `pnpm typecheck` · `pnpm build` · `pnpm test` (em `web/`)
+- Web: `pnpm lint` · `pnpm format:check` · `pnpm typecheck` · `pnpm build` (em `web/`) — sem `test` até a Fase 8
 - Server: `pnpm lint` · `pnpm typecheck` · `pnpm test` · `pnpm build` · `pnpm db:migrate` (em `server/`)
 - Infra: `pulumi preview -s brevly-prod` · `pulumi up -s brevly-prod` (em `infra/`)

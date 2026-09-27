@@ -2,6 +2,26 @@
 
 Todas as mudanças notáveis do projeto serão documentadas neste arquivo, seguindo o estilo [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [0.3.1] - 2026-09-27
+
+### Adicionado
+
+- **Índice `links_created_at_idx`** (descendente em `created_at`) para listagem performática — fecha o item 12 do checklist (migration `0001_outstanding_sway.sql`).
+
+### Corrigido
+
+- **Carregamento de `.env`** no server via `process.loadEnvFile()` (Node 20.12+, zero dependência — ADR-007): antes `pnpm dev`/`db:migrate` ignoravam o `.env` e `DATABASE_URL` ficava vazio.
+- **`POST /links` com retry esgotado** passa a retornar `500` (`ShortCodeGenerationError`) em vez de `409` — `409` fica apenas para custom code informado pelo usuário (ADR-008, fiel ao spec).
+
+### Alterado
+
+- **Mensagens de erro de validação** das rotas padronizadas em **PT-BR** (antes em inglês nos erros de schema).
+- **Testes de rota** passam a injetar ambos os serviços (stubs), evitando criar um `Pool` real de Postgres durante os testes.
+
+### Observações
+
+- Suíte de testes subiu para **76** (service + rota cobrindo o `500` do retry esgotado).
+
 ## [0.3.0] - 2026-09-27
 
 ### Adicionado

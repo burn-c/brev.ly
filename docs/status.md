@@ -29,7 +29,7 @@
 
 - **Rotas:** `POST /links`, `GET /links` (paginado), `GET /links/:shortCode` (retorna link completo), `DELETE /links/:id`, `PATCH /links/:id/access`, `GET /reports/links.csv`, `GET /health`.
 - **Camadas:** `src/db/` (schema + client) · `src/repositories/` · `src/services/` (links + report) · `src/routes/` · `src/storage/` (S3/R2) · `src/utils/short-code.ts`.
-- **Testes:** 75 passando (Vitest). Scripts: `typecheck`, `lint`, `format:check`, `test`, `build`, `db:migrate`, `db:generate`.
+- **Testes:** 76 passando (Vitest). Scripts: `typecheck`, `lint`, `format:check`, `test`, `build`, `db:migrate`, `db:generate`.
 - **Ids:** uuid v7 via `uuidv7` (ADR-001).
 - **Pendências:** Dockerfile (F5), storage em produção real (F6/7).
 
@@ -60,6 +60,10 @@
 
 ## Gotchas operacionais (armadilhas já descobertas)
 
+- **`.env`:** o server carrega `.env` automaticamente via `process.loadEnvFile()` (Node 20.12+) no topo de `src/env.ts` — **zero dependência** de `dotenv` (ADR-007). Se o arquivo não existir (CI/deploy), usa apenas o ambiente do processo.
+- **Índice de listagem:** `created_at` tem índice descendente `links_created_at_idx` (item 12 do checklist). Migration `0001_outstanding_sway.sql`.
+- **Exaustão de retry de short code:** após 5 colisões na auto-geração, `POST /links` retorna `500` (`ShortCodeGenerationError`), não `409` — `409` só para custom code (ADR-008).
+- **Mensagens de erro:** validações de rota e de serviço padronizadas em **PT-BR**.
 - **drizzle 0.45:** violação de unicidade vem em `err.cause.code === "23505"` (`DrizzleQueryError`), não em `err.code`. Usar `isUniqueViolation()` (`src/repositories/links-repository.ts`).
 - **pg `count(*)`:** retorna `bigint`/string → converter com `Number(...)` no `total`.
 - **Biome 2.5:** `recommended` deprecado (usar `preset: "recommended"`); `biome format` sem `--check` já é modo check; `vcs.root: "../"` necessário para achar o `.gitignore` da raiz; schema do biome.json fixado na versão exata do CLI.
@@ -80,6 +84,8 @@
 | [`decisions.md#ADR-004`](./decisions.md) | Deploy 100% AWS + Pulumi | ECS Fargate, RDS micro, S3+CloudFront |
 | [`decisions.md#ADR-005`](./decisions.md) | Storage com 2 providers | chaves `CLOUDFLARE_*` + `AWS_*` |
 | [`decisions.md#ADR-006`](./decisions.md) | Estado Pulumi em S3 centralizado | `s3://burn-pulumi-state` |
+| [`decisions.md#ADR-007`](./decisions.md) | `.env` via `process.loadEnvFile` | zero dependência de `dotenv` |
+| [`decisions.md#ADR-008`](./decisions.md) | Retry esgotado → `500` | `ShortCodeGenerationError`; `409` só para custom code |
 
 ## Próximos passos
 
