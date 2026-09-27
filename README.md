@@ -71,7 +71,8 @@ Fases do roadmap em [`spec.md`](./spec.md#10-roadmap):
 
 - [x] **Fase 1 — Setup** (monorepo `web/` + `server/` + `infra/`, tooling, envs)
 - [x] **Fase 2 — Back-end** (Drizzle + Postgres, migrations, CRUD)
-- [ ] Fase 3 — CSV/CDN
+- [x] **Fase 3 — CSV/CDN** (storage S3/R2, exportação CSV, nome único via CDN)
+- [ ] Fase 4 — Front-end (páginas, UX, responsividade)
 - [ ] Fase 4 — Front-end (páginas, UX, responsividade)
 - [ ] Fase 5 — Docker
 - [ ] Fase 6 — Infra (Pulumi)
