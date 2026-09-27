@@ -17,7 +17,14 @@ Criar o repositório público `brev.ly` e subir o código (Fase 9). Alternativa 
 
 ### 2. Role OIDC (AWS)
 
-O workflow assume uma role IAM via OIDC. Criar com o AWS CLI:
+O workflow assume a role IAM via OIDC. **Já criada na conta `488182246611`**:
+
+- **Role:** `GitHubActionsOIDCRole` → `arn:aws:iam::488182246611:role/GitHubActionsOIDCRole`
+- **Provider OIDC:** `token.actions.githubusercontent.com` (aud `sts.amazonaws.com`)
+- **Trust:** `repo:burn-c/upload-widget-server:*` e `repo:burn-c/brev.ly:*`
+- **Policies inline:** `GitHubActionsECSPolicy` (herdada) + `GitHubActionsBrevlyPolicy` (S3 state/front/csv, CloudFront, ACM, VPC/EC2, RDS, ECS/ECR/ALB, Logs, IAM PassRole)
+
+Para recriar do zero, o comando de referência era:
 
 ```bash
 # criar provider (uma vez por conta)
@@ -30,14 +37,14 @@ aws iam create-open-id-connect-provider \
 # "burn-c/brev.ly"
 ```
 
-A role `GitHubActionsOIDCRole` deve ter as permissões da infra (VPC/ECS/RDS/S3/CloudFront/ECR/ACM/Pulumi) e o trust com o repo. Armar o ARN em `AWS_OIDC_ROLE_ARN`.
+A role `GitHubActionsOIDCRole` cobre as permissões da infra (VPC/ECS/RDS/S3/CloudFront/ECR/ACM/Pulumi) e o trust com o repo. O ARN está no secret `AWS_OIDC_ROLE_ARN`.
 
 ### 3. Secrets do repositório
 
-| Secret | Uso |
-|---|---|
-| `AWS_OIDC_ROLE_ARN` | Role OIDC assumida pelo `configure-aws-credentials` |
-| `DB_PASSWORD` | Senha do RDS (mesma de `brevly-infra:dbPassword` no Pulumi) |
+| Secret | Uso | Status |
+|---|---|---|
+| `AWS_OIDC_ROLE_ARN` | Role OIDC assumida pelo `configure-aws-credentials` | ✅ definido |
+| `DB_PASSWORD` | Senha do RDS (mesma de `brevly-infra:dbPassword` no Pulumi) | ✅ definido |
 
 ```bash
 gh secret set AWS_OIDC_ROLE_ARN

@@ -26,8 +26,6 @@ jobs:
         name: Setup Node.js
         with:
           node-version: 22
-          cache: pnpm
-          cache-dependency-path: server/pnpm-lock.yaml
 
       - name: Install dependencies
         working-directory: server
@@ -131,6 +129,7 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         run: |
           AWS_REGION=us-east-1 pulumi login s3://brevly-pulumi-state
+          AWS_REGION=us-east-1 PULUMI_CONFIG_PASSPHRASE="" pulumi stack select brevly-prod
           AWS_REGION=us-east-1 PULUMI_CONFIG_PASSPHRASE="" pulumi config set brevly-infra:accountId 488182246611
           AWS_REGION=us-east-1 PULUMI_CONFIG_PASSPHRASE="" pulumi config set --secret brevly-infra:dbPassword "$DB_PASSWORD"
 
