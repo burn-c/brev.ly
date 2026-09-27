@@ -7,6 +7,7 @@ import {
   InvalidUrlError,
   LinkNotFoundError,
   ShortCodeAlreadyExistsError,
+  ShortCodeGenerationError,
 } from "../errors/links-errors.js"
 import type { LinksRepository } from "../repositories/links-repository.js"
 import { createLinksService } from "./links-service.js"
@@ -142,13 +143,13 @@ describe("createLinksService", () => {
       expect(link.shortCode).toBe("xyz9876")
     })
 
-    it("throws ShortCodeAlreadyExistsError when retries are exhausted", async () => {
+    it("throws ShortCodeGenerationError when retries are exhausted", async () => {
       const repo = new FakeLinksRepository([makeLink({ shortCode: "abc1234" })])
       const service = createLinksService(repo, () => "abc1234")
 
       await expect(
         service.createLink({ originalUrl: "https://example.com" })
-      ).rejects.toBeInstanceOf(ShortCodeAlreadyExistsError)
+      ).rejects.toBeInstanceOf(ShortCodeGenerationError)
     })
   })
 

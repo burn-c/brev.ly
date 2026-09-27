@@ -14,6 +14,14 @@ export class ShortCodeAlreadyExistsError extends Error {
   }
 }
 
+export class ShortCodeGenerationError extends Error {
+  override name = "ShortCodeGenerationError"
+
+  constructor(message = "Não foi possível gerar uma URL encurtada") {
+    super(message)
+  }
+}
+
 export class InvalidShortCodeError extends Error {
   override name = "InvalidShortCodeError"
 

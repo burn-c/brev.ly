@@ -7,8 +7,10 @@ import {
   InvalidUrlError,
   LinkNotFoundError,
   ShortCodeAlreadyExistsError,
+  ShortCodeGenerationError,
 } from "../errors/links-errors.js"
 import type { LinksService } from "../services/links-service.js"
+import type { ReportService } from "../services/report-service.js"
 
 const link: Link = {
   id: "0192f3a0-0000-7000-8000-000000000001",
@@ -38,7 +40,10 @@ type InjectOptions = {
 }
 
 async function inject(stub: LinksService, options: InjectOptions) {
-  const app = buildApp({ linksService: stub })
+  const reportServiceStub: ReportService = {
+    exportLinksCsv: vi.fn(),
+  }
+  const app = buildApp({ linksService: stub, reportService: reportServiceStub })
 
   const response = await app.inject(options)
 
@@ -102,6 +107,19 @@ describe("POST /links", () => {
 
     expect(response.statusCode).toBe(409)
     expect(response.json()).toEqual({ message: "taken" })
+  })
+
+  it("returns 500 when service throws ShortCodeGenerationError", async () => {
+    const stub = createLinksServiceStub()
+    stub.createLink = vi.fn().mockRejectedValue(new ShortCodeGenerationError("failed"))
+
+    const response = await inject(stub, {
+      method: "POST",
+      url: "/links",
+      payload: { originalUrl: "https://example.com" },
+    })
+
+    expect(response.statusCode).toBe(500)
   })
 
   it("returns 400 when body is invalid", async () => {

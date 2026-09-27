@@ -7,6 +7,7 @@ import {
   InvalidUrlError,
   LinkNotFoundError,
   ShortCodeAlreadyExistsError,
+  ShortCodeGenerationError,
 } from "../errors/links-errors.js"
 import type { LinksRepository } from "../repositories/links-repository.js"
 import { generateShortCode, isValidShortCode, SHORT_CODE_LENGTH } from "../utils/short-code.js"
@@ -70,7 +71,7 @@ export function createLinksService(
           }
           attempts += 1
           if (attempts >= MAX_CREATE_ATTEMPTS) {
-            throw error
+            throw new ShortCodeGenerationError()
           }
         }
       }
