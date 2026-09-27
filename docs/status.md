@@ -17,6 +17,7 @@
 - [x] Fase 2 — Back-end (Drizzle + Postgres, migrations, CRUD)
 - [x] Fase 3 — CSV/CDN (storage S3/R2, exportação CSV)
 - [~] Fase 4 — Front-end (páginas `/`, `/:url-encurtada`, `*`; fluxos; UX; responsividade) — implementado, falta revisão visual final
+- [x] Fase 5 — Docker (Dockerfile multi-stage + docker-compose local)
 - [ ] Fase 5 — Docker (Dockerfile, docker-compose)
 - [ ] Fase 6 — Infra (Pulumi: VPC/ECS/RDS/S3/CloudFront)
 - [ ] Fase 7 — CI/CD (GitHub Actions + OIDC)
@@ -31,7 +32,8 @@
 - **Camadas:** `src/db/` (schema + client) · `src/repositories/` · `src/services/` (links + report) · `src/routes/` · `src/storage/` (S3/R2) · `src/utils/short-code.ts`.
 - **Testes:** 76 passando (Vitest). Scripts: `typecheck`, `lint`, `format:check`, `test`, `build`, `db:migrate`, `db:generate`.
 - **Ids:** uuid v7 via `uuidv7` (ADR-001).
-- **Pendências:** Dockerfile (F5), storage em produção real (F6/7).
+- **Docker ✅ (Fase 5):** `Dockerfile` multi-stage (base/dependencies/build/production_deployment) + `docker-compose.yaml` (db postgres:15-alpine + app), validados de ponta a ponta (health, create/list/access dentro dos containers). Ver [`docker.md`](./docker.md).
+- **Pendências:** storage em produção real (F6/7).
 
 ### `web/` — Front-end (React + Vite + TS + Tailwind) 🎨 design system pronto · 🔨 Fase 4 em andamento
 
@@ -67,7 +69,7 @@
 - **drizzle 0.45:** violação de unicidade vem em `err.cause.code === "23505"` (`DrizzleQueryError`), não em `err.code`. Usar `isUniqueViolation()` (`src/repositories/links-repository.ts`).
 - **pg `count(*)`:** retorna `bigint`/string → converter com `Number(...)` no `total`.
 - **Biome 2.5:** `recommended` deprecado (usar `preset: "recommended"`); `biome format` sem `--check` já é modo check; `vcs.root: "../"` necessário para achar o `.gitignore` da raiz; schema do biome.json fixado na versão exata do CLI.
-- **pnpm 11:** exige `onlyBuiltDependencies` (esbuild/pulumi) → `pnpm-workspace.yaml` em `server/` e `infra/`.
+- **pnpm 11:** exige `onlyBuiltDependencies` (esbuild/pulumi) → `pnpm-workspace.yaml` em `server/` e `infra/`. **pnpm 11.9 exige Node ≥ 22** — o Dockerfile usa `node:22-alpine` (o "node 20" do spec não roda pnpm 11: `ERR_UNKNOWN_BUILTIN_MODULE`).
 - **tsup:** `build` usa entrada `src/server.ts` (evita empacotar testes no `dist/`); `outExtension: ".mjs"`.
 - **AWS SDK v3:** `requestChecksumCalculation: "WHEN_REQUIRED"` + `responseChecksumValidation: "WHEN_REQUIRED"` no client (compatibilidade com provedores S3-compatíveis).
 - **Ambiente (Docker):** MinIO e LocalStack bloqueados no registro; `s3mock` v3 incompatível (parse XML) e v2 não persiste uploads do SDK v3. **Validação de rede S3/R2 fica para o deploy (F6/7).** O mesmo SDK é comprovado contra R2 no projeto de referência.
@@ -90,8 +92,7 @@
 ## Próximos passos
 
 1. **Fase 4 — Front-end (finalização):** revisão visual das páginas contra o `design-spec.md` (Desktop 1366×720 e Mobile 390px), ajustes finos de fidelidade, testes manuais dos fluxos (criar/listar/deletar/redirecionar/CSV) e marcação como concluída.
-2. Fase 5 — Docker (Dockerfile multi-stage + docker-compose).
-3. Fase 6 — Pulumi (stack `brevly-prod`, recursos AWS).
+2. Fase 6 — Pulumi (stack `brevly-prod`, recursos AWS).
 4. Fase 7 — CI/CD (GitHub Actions, OIDC).
 5. Fase 8 — Testes e2e/aceite.
 6. Fase 9 — Entrega (repositório público, push, submissão FTR).

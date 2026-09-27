@@ -2,6 +2,21 @@
 
 Todas as mudanças notáveis do projeto serão documentadas neste arquivo, seguindo o estilo [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [0.5.0] - 2026-09-27
+
+### Adicionado
+
+- **`server/Dockerfile`** multi-stage (padrão do spec): `base` (node:22-alpine + pnpm via corepack), `dependencies` (`pnpm install --frozen-lockfile`), `build` (`pnpm build` + `pnpm prune --prod`), `production_deployment` (imagem leve: `dist/` + `node_modules` prod, `USER node`).
+- **`server/docker-compose.yaml`** (dev local): serviços `db` (postgres:15-alpine, healthcheck, volume `db-data`) e `app` (build local, `env_file: .env`, `DATABASE_URL` apontando para o `db` do compose, porta 3333).
+- **`server/.dockerignore`** e `packageManager: pnpm@11.9.0` no `server/package.json`.
+- **`docs/docker.md`** com instruções de build e uso do compose.
+
+### Observações
+
+- **Node 22** no Dockerfile: o pnpm 11.9 fixado exige Node ≥ 22 (no Node 20 falha com `ERR_UNKNOWN_BUILTIN_MODULE`). O spec citava "node 20", mas o runtime real do projeto é Node 22+.
+- **Migrations fora do container:** `drizzle-kit` é devDependency (removido no `prune --prod`); `pnpm db:migrate` roda no host/CI (Fase 7), como documentado em `docs/docker.md`.
+- Validado de ponta a ponta: `docker build` ok; compose sobe `db`+`app` e o fluxo create/list/access funciona dentro dos containers.
+
 ## [0.4.0] - 2026-09-27
 
 ### Adicionado

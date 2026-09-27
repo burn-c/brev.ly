@@ -12,9 +12,9 @@
 | [`decisions.md`](./decisions.md) | ADRs — decisões técnicas com alternativas consideradas e o porquê (identificador, redirect, short code, deploy, storage, estado Pulumi) |
 | [`api.md`](./api.md) | Contratos da API, exemplos e códigos de erro |
 | [`database.md`](./database.md) | Schema, migrations e comandos `db:migrate` |
+| [`docker.md`](./docker.md) | Dockerfile multi-stage e docker-compose local |
 | [Design tokens (web)](../web/docs/design-tokens.md) | Tokens oficiais do Figma (`blue-base`, `gray-100..600`, `danger`) — fonte de verdade visual |
 | [Design spec (web)](../web/docs/design-spec.md) | Spec das telas e componentes extraída do Figma (8 telas, estados, layout) |
-| `docker.md` | Dockerfile, docker-compose e comandos úteis (pendente — Fase 5) |
 | `deploy.md` | Passo a passo do deploy AWS (ECS/RDS/S3/CloudFront) (pendente — Fase 6/7) |
 | `infra-pulumi.md` | Stack `brevly-prod`, estado S3, preview/up (pendente — Fase 6) |
 | `ci-cd.md` | Workflows GitHub Actions, OIDC, fluxo PR/main (pendente — Fase 7) |
