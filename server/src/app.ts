@@ -19,14 +19,23 @@ export function buildApp(options: BuildAppOptions = {}) {
   app.register(cors, { origin: env.FRONTEND_URL })
   app.register(healthCheckRoutes)
 
-  const linksService = options.linksService ?? createDefaultLinksService()
+  const { linksService, pool } = options.linksService
+    ? { linksService: options.linksService, pool: undefined }
+    : createDefaultDependencies()
+
+  if (pool) {
+    app.addHook("onClose", async () => {
+      await pool.end()
+    })
+  }
+
   app.register(linksRoutes, { linksService })
 
   return app
 }
 
-function createDefaultLinksService(): LinksService {
-  const { db } = createDb()
+function createDefaultDependencies() {
+  const { db, pool } = createDb()
   const repository = createLinksRepository(db)
-  return createLinksService(repository)
+  return { linksService: createLinksService(repository), pool }
 }
