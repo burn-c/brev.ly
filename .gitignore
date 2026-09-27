@@ -1,0 +1,22 @@
+# Dependências
+node_modules
+
+# Build
+dist
+build
+
+# Ambiente
+.env
+.env.*
+!.env.example
+
+# Sistema
+.DS_Store
+
+# Dados locais
+db-data
+*.log
+
+# IDE
+.idea
+.vscode/*.local
