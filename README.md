@@ -70,7 +70,7 @@ pulumi preview -s brevly-prod   # após a Fase 6 (stack ainda não criada)
 Fases do roadmap em [`spec.md`](./spec.md#10-roadmap):
 
 - [x] **Fase 1 — Setup** (monorepo `web/` + `server/` + `infra/`, tooling, envs)
-- [ ] Fase 2 — Back-end (Drizzle + Postgres, migrations, CRUD)
+- [x] **Fase 2 — Back-end** (Drizzle + Postgres, migrations, CRUD)
 - [ ] Fase 3 — CSV/CDN
 - [ ] Fase 4 — Front-end (páginas, UX, responsividade)
 - [ ] Fase 5 — Docker
