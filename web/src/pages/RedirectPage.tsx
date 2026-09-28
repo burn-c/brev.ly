@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { Link, useParams } from "react-router-dom"
 import { LogoIcon } from "../components/Logo"
 import type { Link as LinkType } from "../lib/api"
@@ -12,7 +12,6 @@ function RedirectPage() {
   const [status, setStatus] = useState<"loading" | "notFound" | "error">("loading")
   const [link, setLink] = useState<LinkType | null>(null)
   const [errorMessage, setErrorMessage] = useState("")
-  const ranShortCodeRef = useRef<string | null>(null)
 
   useEffect(() => {
     const shortCode = urlEncurtada ?? ""
@@ -22,15 +21,13 @@ function RedirectPage() {
       return
     }
 
-    if (ranShortCodeRef.current === shortCode) {
-      return
-    }
-    ranShortCodeRef.current = shortCode
-
     let cancelled = false
 
     getLinkByShortCode(shortCode)
       .then(async found => {
+        if (cancelled) {
+          return
+        }
         setLink(found)
         try {
           await incrementAccess(found.id)

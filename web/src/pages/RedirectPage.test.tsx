@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from "@testing-library/react"
+import { StrictMode } from "react"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { ApiError, getLinkByShortCode, incrementAccess } from "../lib/api"
@@ -29,14 +30,15 @@ const link = {
   createdAt: "2026-01-01T00:00:00Z",
 }
 
-function renderRedirect(initialEntry = "/abc123") {
-  return render(
+function renderRedirect(initialEntry = "/abc123", strict = false) {
+  const tree = (
     <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
         <Route path=":urlEncurtada" element={<RedirectPage />} />
       </Routes>
     </MemoryRouter>
   )
+  return render(strict ? <StrictMode>{tree}</StrictMode> : tree)
 }
 
 describe("RedirectPage", () => {
@@ -69,6 +71,17 @@ describe("RedirectPage", () => {
       expect(window.location.href).toBe("https://exemplo.com.br")
     })
     expect(vi.mocked(incrementAccess)).toHaveBeenCalledWith("1")
+  })
+
+  it("redirects exactly once under StrictMode (dev double-invoke)", async () => {
+    vi.mocked(getLinkByShortCode).mockResolvedValue(link)
+    vi.mocked(incrementAccess).mockResolvedValue({ accessCount: 43 })
+    renderRedirect("/abc123", true)
+
+    await waitFor(() => {
+      expect(window.location.href).toBe("https://exemplo.com.br")
+    })
+    expect(vi.mocked(incrementAccess)).toHaveBeenCalledTimes(1)
   })
 
   it("renders the not found page when the link does not exist (404)", async () => {
