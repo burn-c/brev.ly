@@ -19,6 +19,14 @@ describe("Button", () => {
     expect(screen.getByRole("button")).toHaveClass("bg-gray-200")
   })
 
+  it("applies md size by default and sm size when set", () => {
+    render(<Button>Padrão</Button>)
+    expect(screen.getByRole("button", { name: "Padrão" })).toHaveClass("h-12")
+
+    render(<Button size="sm">Compacto</Button>)
+    expect(screen.getByRole("button", { name: "Compacto" })).toHaveClass("h-8")
+  })
+
   it("does not fire onClick when disabled", async () => {
     const onClick = vi.fn()
     const user = userEvent.setup()

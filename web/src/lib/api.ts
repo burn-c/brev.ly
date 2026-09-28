@@ -34,8 +34,15 @@ class ApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers: Record<string, string> = {
+    ...(init?.headers as Record<string, string> | undefined),
+  }
+  if (init?.body !== undefined && init?.body !== null) {
+    headers["content-type"] = "application/json"
+  }
+
   const response = await fetch(`${BASE_URL}${path}`, {
-    headers: { "content-type": "application/json", ...init?.headers },
+    headers,
     ...init,
   })
 

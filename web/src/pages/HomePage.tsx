@@ -206,7 +206,12 @@ function HomePage() {
           <section className="rounded-lg bg-gray-100 p-6 md:flex-1 md:p-8">
             <div className="flex items-center justify-between gap-4">
               <h2 className="text-lg font-bold text-gray-600">Meus links</h2>
-              <Button variant="secondary" onClick={handleDownloadCsv} disabled={isDownloading}>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleDownloadCsv}
+                disabled={isDownloading}
+              >
                 <Download size={16} aria-hidden="true" />
                 Baixar CSV
               </Button>
@@ -219,7 +224,7 @@ function HomePage() {
                 <p className="text-xs uppercase text-gray-500">
                   Não foi possível carregar os links
                 </p>
-                <Button variant="secondary" onClick={() => refetch()}>
+                <Button variant="secondary" size="sm" onClick={() => refetch()}>
                   Tentar novamente
                 </Button>
               </div>
