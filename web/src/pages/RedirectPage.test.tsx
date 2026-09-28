@@ -84,4 +84,12 @@ describe("RedirectPage", () => {
     expect(await screen.findByText("Link não encontrado")).toBeInTheDocument()
     expect(vi.mocked(getLinkByShortCode)).not.toHaveBeenCalled()
   })
+
+  it("renders the error state with a link back home on network failure", async () => {
+    vi.mocked(getLinkByShortCode).mockRejectedValue(new Error("Network error"))
+    renderRedirect()
+
+    expect(await screen.findByText("Network error")).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Voltar para a página inicial" })).toBeInTheDocument()
+  })
 })

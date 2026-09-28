@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { ToastProvider } from "../components/Toast"
-import { ApiError, createLink, deleteLink, listLinks } from "../lib/api"
+import { ApiError, createLink, deleteLink, getCsvUrl, listLinks } from "../lib/api"
 import { HomePage } from "./HomePage"
 
 vi.mock("../lib/api", () => {
@@ -51,6 +51,17 @@ describe("HomePage", () => {
   afterEach(() => {
     vi.clearAllMocks()
     vi.restoreAllMocks()
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: undefined,
+    })
+  })
+
+  it("shows the skeleton while the list is loading", () => {
+    vi.mocked(listLinks).mockReturnValue(new Promise(() => {}))
+    renderHomePage()
+
+    expect(document.querySelector(".animate-pulse")).toBeInTheDocument()
   })
 
   it("renders the list of links with short code, URL and counter", async () => {
@@ -153,5 +164,128 @@ describe("HomePage", () => {
     await user.click(screen.getByRole("button", { name: "Excluir" }))
 
     expect(vi.mocked(deleteLink)).not.toHaveBeenCalled()
+  })
+
+  it("downloads the CSV from the CDN url", async () => {
+    const user = userEvent.setup()
+    const openSpy = vi.spyOn(window, "open").mockImplementation(() => null)
+    vi.mocked(listLinks).mockResolvedValue({
+      data: [],
+      meta: { page: 1, pageSize: 100, total: 0, totalPages: 0 },
+    })
+    vi.mocked(getCsvUrl).mockResolvedValue({
+      url: "https://brev-ly.burndev.app/csv/report.csv",
+    })
+    renderHomePage()
+
+    await user.click(screen.getByRole("button", { name: /baixar csv/i }))
+
+    expect(vi.mocked(getCsvUrl)).toHaveBeenCalled()
+    expect(openSpy).toHaveBeenCalledWith(
+      "https://brev-ly.burndev.app/csv/report.csv",
+      "_blank",
+      "noopener,noreferrer"
+    )
+  })
+
+  it("shows a toast when the CSV download fails", async () => {
+    const user = userEvent.setup()
+    vi.mocked(listLinks).mockResolvedValue({
+      data: [],
+      meta: { page: 1, pageSize: 100, total: 0, totalPages: 0 },
+    })
+    vi.mocked(getCsvUrl).mockRejectedValue(new ApiError("Erro interno", 500))
+    renderHomePage()
+
+    await user.click(screen.getByRole("button", { name: /baixar csv/i }))
+
+    expect(await screen.findByText("Não foi possível baixar o CSV")).toBeInTheDocument()
+  })
+
+  it("copies the short url to the clipboard", async () => {
+    const user = userEvent.setup()
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    })
+    vi.mocked(listLinks).mockResolvedValue({
+      data: [link],
+      meta: { page: 1, pageSize: 100, total: 1, totalPages: 1 },
+    })
+    renderHomePage()
+
+    await screen.findByText("http://localhost:5173/abc123")
+    await user.click(screen.getByRole("button", { name: "Copiar" }))
+
+    expect(writeText).toHaveBeenCalledWith("http://localhost:5173/abc123")
+    expect(await screen.findByText("Copiado")).toBeInTheDocument()
+  })
+
+  it("shows a toast when copying fails", async () => {
+    const user = userEvent.setup()
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: vi.fn().mockRejectedValue(new Error("denied")) },
+    })
+    vi.mocked(listLinks).mockResolvedValue({
+      data: [link],
+      meta: { page: 1, pageSize: 100, total: 1, totalPages: 1 },
+    })
+    renderHomePage()
+
+    await screen.findByText("http://localhost:5173/abc123")
+    await user.click(screen.getByRole("button", { name: "Copiar" }))
+
+    expect(await screen.findByText("Não foi possível copiar o link")).toBeInTheDocument()
+  })
+
+  it("shows the validation error for an invalid url", async () => {
+    const user = userEvent.setup()
+    vi.mocked(listLinks).mockResolvedValue({
+      data: [],
+      meta: { page: 1, pageSize: 100, total: 0, totalPages: 0 },
+    })
+    renderHomePage()
+
+    await user.type(screen.getByLabelText("link original"), "not-a-url")
+    await user.click(screen.getByRole("button", { name: "Salvar link" }))
+
+    expect(await screen.findByText("Informe uma URL válida (http/https)")).toBeInTheDocument()
+    expect(vi.mocked(createLink)).not.toHaveBeenCalled()
+  })
+
+  it("shows the validation error for an invalid short code", async () => {
+    const user = userEvent.setup()
+    vi.mocked(listLinks).mockResolvedValue({
+      data: [],
+      meta: { page: 1, pageSize: 100, total: 0, totalPages: 0 },
+    })
+    renderHomePage()
+
+    await user.type(screen.getByLabelText("link original"), "https://exemplo.com.br")
+    await user.type(screen.getByLabelText("link encurtado"), "codigo invalido!!")
+    await user.click(screen.getByRole("button", { name: "Salvar link" }))
+
+    expect(await screen.findByText("Use de 1 a 10 caracteres alfanuméricos")).toBeInTheDocument()
+    expect(vi.mocked(createLink)).not.toHaveBeenCalled()
+  })
+
+  it("shows an error state and retries the list when requested", async () => {
+    const user = userEvent.setup()
+    vi.mocked(listLinks)
+      .mockRejectedValueOnce(new ApiError("Erro interno", 500))
+      .mockResolvedValueOnce({
+        data: [link],
+        meta: { page: 1, pageSize: 100, total: 1, totalPages: 1 },
+      })
+    renderHomePage()
+
+    expect(await screen.findByText("Não foi possível carregar os links")).toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: "Tentar novamente" }))
+
+    expect(await screen.findByText("http://localhost:5173/abc123")).toBeInTheDocument()
+    expect(vi.mocked(listLinks)).toHaveBeenCalledTimes(2)
   })
 })
