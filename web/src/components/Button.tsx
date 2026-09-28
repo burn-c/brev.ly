@@ -8,7 +8,8 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary: "h-12 rounded-lg bg-blue-base text-white hover:bg-blue-dark disabled:opacity-50",
+  primary:
+    "h-12 rounded-lg bg-blue-base text-sm font-semibold text-white hover:bg-blue-dark disabled:opacity-50",
   secondary:
     "h-8 rounded border border-transparent bg-gray-200 px-2 text-xs font-semibold text-gray-500 hover:border-blue-base disabled:opacity-50",
 }
