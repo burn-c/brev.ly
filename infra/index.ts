@@ -253,6 +253,26 @@ const fargateService = new awsx.ecs.FargateService("brevly-server", {
     securityGroups: [appSecurityGroup.id],
   },
   taskDefinitionArgs: {
+    executionRole: {
+      args: {
+        inlinePolicies: [
+          {
+            name: "ecs-log-group-create",
+            policy: JSON.stringify({
+              Version: "2012-10-17",
+              Statement: [
+                {
+                  Sid: "CreateLogGroup",
+                  Effect: "Allow",
+                  Action: ["logs:CreateLogGroup"],
+                  Resource: "*",
+                },
+              ],
+            }),
+          },
+        ],
+      },
+    },
     container: {
       name: "brevly-server",
       image: appImage,
