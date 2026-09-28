@@ -298,3 +298,71 @@ Criar o bucket **`s3://brevly-pulumi-state`** (conta `488182246611`, região `us
 - Substitui o ADR-006 para o Brev.ly (o `burn-pulumi-state` permanece válido para `burndev.iac`).
 - `pulumi login s3://brevly-pulumi-state` exige `AWS_REGION=us-east-1` (bucket nessa região).
 - Stack `brevly-prod` inicializada e `preview` validado (50 recursos).
+
+---
+
+## ADR-010 — Domínio próprio, HTTPS e OAC (CloudFront)
+
+- **Status:** Aceita
+- **Data:** 2026-09-28
+
+### Contexto
+
+O deploy de produção usava endpoints AWS nativos (CloudFront com cert default, ALB em HTTP:80) e os buckets S3 com policy pública (`Principal: "*"`). O front-end era compilado apontando para `api.brevly.com.br`/`cdn.brevly.com.br` — domínios que não resolvem — deixando o app publicado inacessível. Além disso, o acesso direto aos objetos do bucket (fora da CDN) era permitido.
+
+### Alternativas consideradas
+
+- **Manter endpoints AWS nativos** (cert default, ALB HTTP): app inacessível por domínio + tráfego da API sem TLS.
+- **Usar domínio próprio `brev-ly.burndev.app`** (DNS na Squarespace) com ACM + HTTPS + **Origin Access Control (OAC)**.
+
+### Decisão
+
+- **Domínio:** `brev-ly.burndev.app` (front/redirect via CloudFront) e `api.brev-ly.burndev.app` (API via ALB).
+- **TLS:** ACM (us-east-1, validação DNS) com SANs para os dois nomes; CloudFront com alias + cert; ALB com listener 443 + redirect de 80→443.
+- **OAC:** buckets S3 **privados** acessados apenas via CloudFront (Origin Access Control); políticas públicas removidas e `PublicAccessBlock` reativado.
+- **Implementação em 2 etapas:** flag `brevly-infra:enableTls` — primeiro cria ACM (pending) e exporta os CNAMEs de validação DNS; após a validação, ativa alias/TLS/redirect.
+
+### Por quê
+
+- Requisito de entrega (item 24) e boas práticas AWS: front e API acessíveis por domínio com HTTPS.
+- OAC elimina o acesso público direto ao bucket (defesa em profundidade).
+- A flag `enableTls` evita falha de ordem (CloudFront/ALB não aceitam cert `PENDING_VALIDATION`).
+
+### Consequências
+
+- CNAMEs a adicionar na Squarespace (4): 2 de validação ACM + `brev-ly` → CloudFront + `api` → ALB.
+- Custos: ACM é gratuito; apenas o secret (ADR-011) acrescenta ~US$0,40/mês.
+- `cloudfront:*` permanece `*` na role de CI por limitação da AWS (sem resource-level); demais serviços escopados por ARN (ver ADR-011).
+
+---
+
+## ADR-011 — Secrets Manager e role de CI dedicada
+
+- **Status:** Aceita
+- **Data:** 2026-09-28
+
+### Contexto
+
+A senha do RDS ficava em **plaintext** no `environment` da task definition do ECS (visível via console/API). Além disso, a role OIDC `GitHubActionsOIDCRole` era **compartilhada** com o `upload-widget-server` e tinha permissões amplas (`cloudfront:*`, `rds:*`, `acm:*`, etc. em `*`).
+
+### Alternativas consideradas
+
+- **Manter senha em plaintext + role compartilhada:** exposição de segredo e "blast radius" amplo (qualquer repo com trust herda as permissões).
+- **Secrets Manager + role dedicada:** segredo injetado no runtime pelo ECS e role de CI isolada e escopada por ARN.
+
+### Decisão
+
+- **Secrets Manager:** criar o secret `brevly/DATABASE_URL` e referenciá-lo no task definition via `secrets: [{ name: "DATABASE_URL", valueFrom: <arn> }]`. A execution role ganha `secretsmanager:GetSecretValue` restrito ao ARN do secret.
+- **Role dedicada:** criar `GitHubActionsOIDCRoleBrevly` com trust **apenas** para `repo:burn-c/brev.ly:*` e policy escopada por ARN (RDS, ECS/ECR, ELBv2, Logs, S3, `iam:PassRole` para as roles do ECS). `cloudfront:*` permanece `*` (limitação AWS). O secret `AWS_OIDC_ROLE_ARN` passa a apontar para a nova role.
+
+### Por quê
+
+- Segredo não fica exposto na definição da task (defesa em profundidade).
+- Isolamento do Brev.ly: o upload-widget não herda permissões do projeto e vice-versa (blast radius mínimo).
+- Least-privilege onde a AWS permite resource-level.
+
+### Consequências
+
+- Custo do secret ~US$0,40/mês.
+- A role antiga `GitHubActionsOIDCRole` permanece intacta para o upload-widget.
+- Redeploy determinístico via tag `sha` (config `brevly-infra:imageTag`).
