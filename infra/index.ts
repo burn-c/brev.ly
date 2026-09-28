@@ -406,8 +406,9 @@ new aws.iam.RolePolicy("brevly-server-task-policy", {
 })
 
 // Task definition explícita (evita recriação automática do awsx)
+// family único por imageTag → cada deploy cria uma task def nova (sem replace/duplicação no state)
 const taskDefinition = new aws.ecs.TaskDefinition("brevly-server-task-def", {
-  family: "brevly-server",
+  family: imageTag === "latest" ? "brevly-server" : `brevly-server-${imageTag.slice(0, 8)}`,
   networkMode: "awsvpc",
   requiresCompatibilities: ["FARGATE"],
   cpu: "256",
