@@ -37,6 +37,22 @@ jobs:
           cache: pnpm
           cache-dependency-path: infra/pnpm-lock.yaml
 
+      - name: Debug OIDC sub claim
+        run: |
+          python3 - <<'PYEOF'
+          import base64, json, os, urllib.request
+          req = urllib.request.Request(
+              os.environ["ACTIONS_ID_TOKEN_REQUEST_URL"] + "&audience=sts.amazonaws.com",
+              headers={"Authorization": f"Bearer {os.environ['ACTIONS_ID_TOKEN_REQUEST_TOKEN']}"},
+          )
+          raw = json.loads(urllib.request.urlopen(req).read())["value"]
+          payload = raw.split(".")[1]
+          payload += "=" * (-len(payload) % 4)
+          claims = json.loads(base64.urlsafe_b64decode(payload))
+          print("SUB:", claims.get("sub"))
+          print("AUD:", claims.get("aud"))
+          PYEOF
+
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -230,22 +246,6 @@ jobs:
           cache: pnpm
           cache-dependency-path: infra/pnpm-lock.yaml
 
-      - name: Debug OIDC sub claim
-        run: |
-          python3 - <<'PYEOF'
-          import base64, json, os, urllib.request
-          req = urllib.request.Request(
-              os.environ["ACTIONS_ID_TOKEN_REQUEST_URL"] + "&audience=sts.amazonaws.com",
-              headers={"Authorization": f"Bearer {os.environ['ACTIONS_ID_TOKEN_REQUEST_TOKEN']}"},
-          )
-          raw = json.loads(urllib.request.urlopen(req).read())["value"]
-          payload = raw.split(".")[1]
-          payload += "=" * (-len(payload) % 4)
-          claims = json.loads(base64.urlsafe_b64decode(payload))
-          print("SUB:", claims.get("sub"))
-          print("AUD:", claims.get("aud"))
-          PYEOF
-
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -253,7 +253,7 @@ jobs:
           aws-region: us-east-1
 
       - name: Install dependencies
-        working-directory: web
+        working-directory: infra
         run: pnpm install --frozen-lockfile
 
       - name: Build
