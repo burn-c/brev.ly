@@ -15,60 +15,9 @@ env:
   S3_BUCKET: brevly-frontend-web
 
 jobs:
-  pulumi-up:
-    name: Pulumi up (infra)
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-        name: Install pnpm
-        with:
-          version: 11.9.0
-          run_install: false
-
-      - uses: actions/setup-node@v4
-        name: Setup Node.js
-        with:
-          node-version: 22
-          cache: pnpm
-          cache-dependency-path: infra/pnpm-lock.yaml
-
-      - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
-          aws-region: us-east-1
-
-      - name: Install dependencies
-        working-directory: infra
-        run: pnpm install --frozen-lockfile
-
-      - name: Set stack config
-        working-directory: infra
-        env:
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-        run: |
-          AWS_REGION=us-east-1 pulumi login s3://brevly-pulumi-state
-          AWS_REGION=us-east-1 PULUMI_CONFIG_PASSPHRASE="" pulumi stack select brevly-prod
-          AWS_REGION=us-east-1 PULUMI_CONFIG_PASSPHRASE="" pulumi config set brevly-infra:enableTls false
-          AWS_REGION=us-east-1 PULUMI_CONFIG_PASSPHRASE="" pulumi config set brevly-infra:accountId 488182246611
-          AWS_REGION=us-east-1 PULUMI_CONFIG_PASSPHRASE="" pulumi config set --secret brevly-infra:dbPassword "$DB_PASSWORD"
-
-      - name: Pulumi up (create infrastructure)
-        working-directory: infra
-        env:
-          AWS_REGION: us-east-1
-          PULUMI_CONFIG_PASSPHRASE: ""
-        run: pulumi up -s brevly-prod --yes
-
   build-and-push-server:
     name: Build & push server image (ECR)
     runs-on: ubuntu-latest
-    needs: pulumi-up
     permissions:
       id-token: write
       contents: read
@@ -99,8 +48,8 @@ jobs:
           docker push "$REGISTRY/$ECR_REPOSITORY:latest"
           echo "tag=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
 
-  pulumi-redeploy:
-    name: Pulumi up (redeploy server)
+  pulumi-deploy:
+    name: Pulumi up (brevly-prod)
     runs-on: ubuntu-latest
     needs: build-and-push-server
     permissions:
@@ -144,7 +93,7 @@ jobs:
           AWS_REGION=us-east-1 PULUMI_CONFIG_PASSPHRASE="" pulumi config set brevly-infra:accountId 488182246611
           AWS_REGION=us-east-1 PULUMI_CONFIG_PASSPHRASE="" pulumi config set --secret brevly-infra:dbPassword "$DB_PASSWORD"
 
-      - name: Pulumi up (redeploy with new image)
+      - name: Pulumi up
         working-directory: infra
         env:
           AWS_REGION: us-east-1
@@ -154,7 +103,7 @@ jobs:
   migrate:
     name: Run db:migrate (ECS task)
     runs-on: ubuntu-latest
-    needs: pulumi-redeploy
+    needs: pulumi-deploy
     permissions:
       id-token: write
       contents: read
@@ -210,7 +159,7 @@ jobs:
   deploy-web:
     name: Deploy web (S3 + CloudFront)
     runs-on: ubuntu-latest
-    needs: pulumi-redeploy
+    needs: pulumi-deploy
     permissions:
       id-token: write
       contents: read
