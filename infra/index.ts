@@ -448,7 +448,7 @@ const taskDefinition = new aws.ecs.TaskDefinition("brevly-server-task-def", {
 
 // ECS Service (nativo) — não recria a task definition
 const ecsService = new aws.ecs.Service("brevly-server-service", {
-  name: "brevly-server",
+  name: "brevly-server-app",
   cluster: ecsCluster.arn,
   taskDefinition: taskDefinition.arn,
   desiredCount: 1,
