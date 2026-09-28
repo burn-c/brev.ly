@@ -9,7 +9,9 @@
     "preview": "vite preview",
     "typecheck": "tsc -b",
     "lint": "biome check",
-    "format:check": "biome format"
+    "format:check": "biome format",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.104.0",
@@ -22,14 +24,19 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.14",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
     "@types/node": "^26.6.3",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.1",
     "autoprefixer": "^10.6.1",
+    "jsdom": "^30.1.1",
     "postcss": "^8.5.28",
     "tailwindcss": "^3.4.19",
     "typescript": "~5.8.3",
-    "vite": "^8.3.1"
+    "vite": "^8.3.1",
+    "vitest": "^5.0.2"
   }
 }
