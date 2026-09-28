@@ -135,8 +135,6 @@ jobs:
       - name: Install dependencies
         working-directory: infra
         run: pnpm install --frozen-lockfile
-
-      - name: Set stack config
         working-directory: infra
         env:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
@@ -227,7 +225,7 @@ jobs:
           version: 11.9.0
           run_install: false
 
-- uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         name: Setup Node.js
         with:
           node-version: 22
