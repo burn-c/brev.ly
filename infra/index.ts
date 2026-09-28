@@ -115,6 +115,11 @@ const cdnDistribution = new aws.cloudfront.Distribution("brevly-cdn", {
   },
   customErrorResponses: [
     {
+      errorCode: 403,
+      responseCode: 200,
+      responsePagePath: "/index.html",
+    },
+    {
       errorCode: 404,
       responseCode: 200,
       responsePagePath: "/index.html",
