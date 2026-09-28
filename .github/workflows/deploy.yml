@@ -54,6 +54,7 @@ jobs:
         run: |
           AWS_REGION=us-east-1 pulumi login s3://brevly-pulumi-state
           AWS_REGION=us-east-1 PULUMI_CONFIG_PASSPHRASE="" pulumi stack select brevly-prod
+          AWS_REGION=us-east-1 PULUMI_CONFIG_PASSPHRASE="" pulumi config set brevly-infra:enableTls false
           AWS_REGION=us-east-1 PULUMI_CONFIG_PASSPHRASE="" pulumi config set brevly-infra:accountId 488182246611
           AWS_REGION=us-east-1 PULUMI_CONFIG_PASSPHRASE="" pulumi config set --secret brevly-infra:dbPassword "$DB_PASSWORD"
 
@@ -138,6 +139,8 @@ jobs:
         run: |
           AWS_REGION=us-east-1 pulumi login s3://brevly-pulumi-state
           AWS_REGION=us-east-1 PULUMI_CONFIG_PASSPHRASE="" pulumi stack select brevly-prod
+          AWS_REGION=us-east-1 PULUMI_CONFIG_PASSPHRASE="" pulumi config set brevly-infra:imageTag "${{ github.sha }}"
+          AWS_REGION=us-east-1 PULUMI_CONFIG_PASSPHRASE="" pulumi config set brevly-infra:enableTls "${{ vars.BREVLY_ENABLE_TLS || 'false' }}"
           AWS_REGION=us-east-1 PULUMI_CONFIG_PASSPHRASE="" pulumi config set brevly-infra:accountId 488182246611
           AWS_REGION=us-east-1 PULUMI_CONFIG_PASSPHRASE="" pulumi config set --secret brevly-infra:dbPassword "$DB_PASSWORD"
 
@@ -171,9 +174,13 @@ jobs:
           PULUMI_CONFIG_PASSPHRASE: ""
         run: |
           AWS_REGION=us-east-1 pulumi login s3://brevly-pulumi-state
-          echo "DB_ENDPOINT=$(AWS_REGION=us-east-1 pulumi stack output databaseEndpoint -s brevly-prod)" >> "$GITHUB_ENV"
-          echo "PRIVATE_SUBNETS=$(AWS_REGION=us-east-1 pulumi stack output privateSubnetIds -s brevly-prod --json | python3 -c "import sys,json;print(','.join(json.load(sys.stdin)))")" >> "$GITHUB_ENV"
-          echo "TASK_DEF=$(aws ecs list-task-definitions --region us-east-1 --sort DESC --query 'taskDefinitionArns[0]' --output text)" >> "$GITHUB_ENV"
+          DB_ENDPOINT=$(AWS_REGION=us-east-1 pulumi stack output databaseEndpoint -s brevly-prod)
+          echo "DB_ENDPOINT=$DB_ENDPOINT" >> "$GITHUB_ENV"
+          PRIVATE_SUBNETS=$(AWS_REGION=us-east-1 pulumi stack output privateSubnetIds -s brevly-prod --json | python3 -c "import sys,json;print(','.join(json.load(sys.stdin)))")
+          echo "PRIVATE_SUBNETS=$PRIVATE_SUBNETS" >> "$GITHUB_ENV"
+          TASK_DEF=$(aws ecs list-task-definitions --region us-east-1 --sort DESC --query 'taskDefinitionArns[0]' --output text)
+          echo "TASK_DEF=$TASK_DEF" >> "$GITHUB_ENV"
+          if [ -z "$DB_ENDPOINT" ] || [ -z "$TASK_DEF" ]; then echo "::error::output vazio" && exit 1; fi
 
       - name: Run migrations via ECS one-off task
         env:
@@ -236,8 +243,8 @@ jobs:
       - name: Build
         working-directory: web
         env:
-          VITE_BACKEND_URL: https://api.brevly.com.br
-          VITE_FRONTEND_URL: https://cdn.brevly.com.br
+          VITE_BACKEND_URL: https://api.brev-ly.burndev.app
+          VITE_FRONTEND_URL: https://brev-ly.burndev.app
         run: pnpm build
 
       - name: Sync to S3
