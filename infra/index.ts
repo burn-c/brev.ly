@@ -40,7 +40,7 @@ const frontendPublicAccessBlock = new aws.s3.BucketPublicAccessBlock(
   {
     bucket: frontendBucket.bucket,
     blockPublicAcls: true,
-    blockPublicPolicy: true,
+    blockPublicPolicy: false,
     ignorePublicAcls: true,
     restrictPublicBuckets: true,
   }
@@ -56,7 +56,7 @@ const csvPublicAccessBlock = new aws.s3.BucketPublicAccessBlock(
   {
     bucket: csvBucket.bucket,
     blockPublicAcls: true,
-    blockPublicPolicy: true,
+    blockPublicPolicy: false,
     ignorePublicAcls: true,
     restrictPublicBuckets: true,
   }
