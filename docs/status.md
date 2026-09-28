@@ -2,12 +2,13 @@
 
 > **Leia antes de implementar.** Este documento é a memória operacional do Brev.ly: estado atual de cada subprojeto, armadilhas descobertas e próximos passos. Deve ser atualizado no ciclo por tarefa (ver [`workflow.md`](./workflow.md)). Mantenha em PT-BR.
 >
-> Atualizado: 2026-09-27
+> Atualizado: 2026-09-28
 
 ## Mapa rápido
 
 - **Repositório:** `brev.ly/` · branch `main` · commits diretos em `main`
 - **GitHub (público):** `https://github.com/burn-c/brev.ly` — publicado na Fase 7/9 após auditoria de segurança
+- **Produção (deploy verde):** front `https://brev-ly.burndev.app` · API `https://api.brev-ly.burndev.app` · CSV `https://brev-ly.burndev.app/csv/<uuid>.csv`
 - **Contexto:** projeto avaliativo Pós-Graduação TD 360 (FTR Rocketseat) — [`spec.md`](../spec.md)
 - **Docs:** [`workflow.md`](./workflow.md) (padrões) · [`decisions.md`](./decisions.md) (ADRs) · [`api.md`](./api.md) · [`database.md`](./database.md)
 - **Instruções p/ agentes:** [`AGENTS.md`](../AGENTS.md)
@@ -17,12 +18,12 @@
 - [x] Fase 1 — Setup (monorepo `web/` + `server/` + `infra/`, tooling, envs)
 - [x] Fase 2 — Back-end (Drizzle + Postgres, migrations, CRUD)
 - [x] Fase 3 — CSV/CDN (storage S3/R2, exportação CSV)
-- [~] Fase 4 — Front-end (páginas `/`, `/:url-encurtada`, `*`; fluxos; UX; responsividade) — implementado, falta revisão visual final
+- [x] Fase 4 — Front-end (páginas `/`, `/:url-encurtada`, `*`; fluxos; UX; responsividade) — **concluída** (fidelidade Figma + revisão visual final validadas)
 - [x] Fase 5 — Docker (Dockerfile multi-stage + docker-compose local)
 - [x] Fase 6 — Infra (Pulumi: VPC/ECS/RDS/S3/CloudFront, stack `brevly-prod` — **deploy aplicado e funcional**)
 - [x] Fase 7 — CI/CD (GitHub Actions + OIDC — **pipelines verdes, deploy automático em main**)
-- [ ] Fase 8 — Testes (suíte completa)
-- [ ] Fase 9 — Entrega (checklist 26 itens, README, submissão)
+- [x] Fase 8 — Testes (server: 77 Vitest · web: Vitest + Testing Library) — **concluída**
+- [x] Fase 9 — Entrega (checklist 26 itens, README, docs, submissão FTR) — **concluída**
 
 ## Estado dos subprojetos
 
@@ -30,12 +31,12 @@
 
 - **Rotas:** `POST /links`, `GET /links` (paginado), `GET /links/:shortCode` (retorna link completo), `DELETE /links/:id`, `PATCH /links/:id/access`, `GET /reports/links.csv`, `GET /health`.
 - **Camadas:** `src/db/` (schema + client) · `src/repositories/` · `src/services/` (links + report) · `src/routes/` · `src/storage/` (S3/R2) · `src/utils/short-code.ts`.
-- **Testes:** 76 passando (Vitest). Scripts: `typecheck`, `lint`, `format:check`, `test`, `build`, `db:migrate`, `db:generate`.
+- **Testes:** 77 passando (Vitest). Scripts: `typecheck`, `lint`, `format:check`, `test`, `build`, `db:migrate`, `db:generate`.
 - **Ids:** uuid v7 via `uuidv7` (ADR-001).
 - **Docker ✅ (Fase 5):** `Dockerfile` multi-stage (base/dependencies/build/production_deployment) + `docker-compose.yaml` (db postgres:15-alpine + app), validados de ponta a ponta (health, create/list/access dentro dos containers). Ver [`docker.md`](./docker.md).
-- **Pendências:** storage em produção real (F6/7).
+- **Pendências:** nenhuma (storage em produção validado no deploy F6/7 — exportação CSV via S3 + CloudFront).
 
-### `web/` — Front-end (React + Vite + TS + Tailwind) 🎨 design system pronto · 🔨 Fase 4 em andamento
+### `web/` — Front-end (React + Vite + TS + Tailwind) 🎨 design system pronto · ✅ Fase 4 + Fase 8 concluídas
 
 - **Scaffold pronto** (React 19, Vite, TanStack Query, RHF, Zod, React Router, Biome).
 - **Design system extraído do Figma ✅ concluído**: tokens, spec das 8 telas e assets commitados.
@@ -43,7 +44,8 @@
   - [`web/docs/design-spec.md`](../web/docs/design-spec.md) — spec detalhada das telas (Links/Empty/Redirect/Not Found × desktop/mobile) e componentes (Button primary/secondary, Icon Button, Input).
   - **Revisão de fidelidade (2026-09-27):** spec reconciliada com o canvas do Figma — corrigidos label do input (`gray-500`), empty state (`gray-500`/CAIXA ALTA), dimensões dos botões (primary full-width, secondary `hug`); documentados botões disabled no empty state, fallback links sublinhados (`blue-base`), gaps da listagem mobile, inputs preenchidos no desktop e cor base `#000000` dos ícones Phosphor (usar `currentColor`).
   - [`web/assets/`](../web/assets/) — `Logo.svg`, `Logo_Icon.svg`, `404.svg` (com `<title>` acessível).
-- **Fase 4 em andamento (2026-09-27):** páginas implementadas — `/` (HomePage: formulário RHF+Zod, listagem TanStack Query, delete, CSV, empty/loading/skeleton, copy), `/:url-encurtada` (RedirectPage: GET → PATCH access → `window.location`, fallback "Acesse aqui", 404 → NotFoundPage), `*` (NotFoundPage com 404.svg). Componentes: `Button` (primary/secondary), `IconButton`, `Input` (default/active/error + Warning), `Logo`/`LogoIcon`, `Toast` (Provider + `useToast`). Cliente API em `src/lib/api.ts`. Verificação (lint/typecheck/build) verde.
+- **Fase 4 concluída (2026-09-28):** páginas implementadas — `/` (HomePage: formulário RHF+Zod, listagem TanStack Query, delete, CSV, empty/loading/skeleton, copy), `/:url-encurtada` (RedirectPage: GET → PATCH access → `window.location`, fallback "Acesse aqui", 404 → NotFoundPage), `*` (NotFoundPage com 404.svg). Componentes: `Button` (primary/secondary), `IconButton`, `Input` (default/active/error + Warning), `Logo`/`LogoIcon`, `Toast` (Provider + `useToast`). Cliente API em `src/lib/api.ts`. **Revisão visual final validada** contra o `design-spec.md` (Desktop 1366×720 e Mobile 390px) — fidelidade ao Figma e responsividade confirmadas. Verificação (lint/typecheck/build) verde.
+- **Testes web (Fase 8 concluída, 2026-09-28):** suíte Vitest + Testing Library para componentes/páginas/fluxos (`web/src/**/*.test.tsx`, `web/vitest.config.*`, `web/src/test/*`); script `test` no `web/package.json`. Server mantém **77 testes** Vitest passando.
 - **Regra:** agentes de layout devem atualizar esta seção e os docs de `web/docs/` a cada avanço.
 
 ### `infra/` — Infraestrutura (Pulumi) ✅ Fase 6 + 7 concluídas (deploy funcional) · 🔒 hardening em andamento (domínio próprio)
@@ -108,9 +110,9 @@
 
 ## Próximos passos
 
-1. Fase 4 — Front-end (finalização): revisão visual contra o `design-spec.md` (Desktop 1366×720 e Mobile 390px) e testes manuais dos fluxos.
-2. Fase 8 — Testes e2e/aceite.
-3. Fase 9 — Entrega (repo público, push, submissão FTR).
+1. **Revisão final de entrega (Fase 9):** conferir o diff final contra o `spec.md` e o checklist de compliance (26/26 ✓ — tabela no `README.md`).
+2. **Submissão na plataforma FTR** (caso aplicável): submeter o projeto avaliativo no TD 360 (repositório público `https://github.com/burn-c/brev.ly`, branch `main`).
+3. **Acompanhamento pós-entrega:** monitorar os pipelines (`pr.yml`/`deploy.yml`) e o deploy de produção para garantir que permanecem verdes após qualquer mudança futura.
 
 ## Como atualizar este documento
 

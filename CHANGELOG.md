@@ -2,6 +2,19 @@
 
 Todas as mudanças notáveis do projeto serão documentadas neste arquivo, seguindo o estilo [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [0.9.0] - 2026-09-28
+
+### Adicionado
+
+- **Fase 4 concluída**: revisão visual final do front-end — fidelidade ao Figma (Desktop 1366×720 e Mobile 390px) e responsividade validadas contra o [`web/docs/design-spec.md`](./web/docs/design-spec.md).
+- **Testes web (Fase 8)**: suíte Vitest + Testing Library para componentes, páginas e fluxos (`web/src/**/*.test.tsx`, `web/vitest.config.*`, `web/src/test/*`) com script `test` no `web/package.json`. Server mantém **77 testes** Vitest passando.
+- **Checklist de compliance**: tabela de status dos 26 itens oficiais (seção 2 do spec) adicionada ao `README.md` — todos cobertos.
+
+### Alterado
+
+- **README.md**: seção "Status" atualizada (fases 4, 6, 7, 8 e 9 concluídas); instruções reais de deploy na seção "Infraestrutura" (`pulumi up -s brevly-prod` com backend `s3://brevly-pulumi-state`); novas seções "Deploy / Acesso" e "Compliance".
+- **docs/status.md**: fases 4, 8 e 9 marcadas como concluídas; seção temporária de coordenação de agentes removida (estado integrado); "Próximos passos" apontando apenas para submissão FTR e revisões finais.
+
 ## [0.8.0] - 2026-09-28
 
 ### Adicionado

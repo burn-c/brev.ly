@@ -19,7 +19,6 @@
 | [`infra-pulumi.md`](./infra-pulumi.md) | Stack `brevly-prod`, estado S3, preview/up |
 | [`ci-cd.md`](./ci-cd.md) | Workflows GitHub Actions (OIDC, PR preview, deploy main) |
 | [`squarespace-dns.md`](./squarespace-dns.md) | Guia para adicionar os CNAMEs do Brev.ly no painel DNS da Squarespace |
-| `ci-cd.md` | Workflows GitHub Actions, OIDC, fluxo PR/main (pendente — Fase 7) |
 
 ## Convenções
 
