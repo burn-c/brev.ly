@@ -27,4 +27,11 @@ describe("Input", () => {
     render(<Input label="link original" error="Informe a URL original" />)
     expect(screen.getByLabelText("link original")).toHaveAttribute("aria-invalid", "true")
   })
+
+  it("renders a fixed prefix before the input value", () => {
+    render(<Input label="link encurtado" prefix="brev.ly/" />)
+    expect(screen.getByText("brev.ly/")).toBeInTheDocument()
+    const input = screen.getByLabelText("link encurtado")
+    expect(input).toHaveValue("")
+  })
 })

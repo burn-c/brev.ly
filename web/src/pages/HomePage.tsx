@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { Button } from "../components/Button"
+import { ConfirmDialog } from "../components/ConfirmDialog"
 import { IconButton } from "../components/IconButton"
 import { Input } from "../components/Input"
 import { Logo } from "../components/Logo"
@@ -69,6 +70,7 @@ function HomePage() {
   const queryClient = useQueryClient()
   const toast = useToast()
   const [isDownloading, setIsDownloading] = useState(false)
+  const [linkToDelete, setLinkToDelete] = useState<LinkData | null>(null)
 
   const {
     register,
@@ -137,10 +139,18 @@ function HomePage() {
   }
 
   const handleDelete = (link: LinkData) => {
-    if (!window.confirm("Excluir este link?")) {
-      return
+    setLinkToDelete(link)
+  }
+
+  const confirmDelete = () => {
+    if (linkToDelete) {
+      deleteMutation.mutate(linkToDelete.id)
+      setLinkToDelete(null)
     }
-    deleteMutation.mutate(link.id)
+  }
+
+  const cancelDelete = () => {
+    setLinkToDelete(null)
   }
 
   const handleDownloadCsv = async () => {
@@ -177,7 +187,8 @@ function HomePage() {
                 />
                 <Input
                   label="link encurtado"
-                  placeholder="brev.ly/"
+                  placeholder="seu-link"
+                  prefix="brev.ly/"
                   error={errors.shortCode?.message}
                   {...register("shortCode")}
                 />
@@ -252,6 +263,14 @@ function HomePage() {
           </section>
         </div>
       </main>
+
+      <ConfirmDialog
+        open={linkToDelete !== null}
+        title="Excluir link"
+        description={`Tem certeza que deseja excluir "${linkToDelete?.shortCode}"?`}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+      />
     </div>
   )
 }
