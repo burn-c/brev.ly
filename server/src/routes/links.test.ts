@@ -162,6 +162,19 @@ describe("GET /links/:shortCode", () => {
     })
   })
 
+  it("returns 400 when short code is malformed", async () => {
+    const stub = createLinksServiceStub()
+
+    const response = await inject(stub, {
+      method: "GET",
+      url: "/links/invalid!",
+    })
+
+    expect(response.statusCode).toBe(400)
+    expect(response.json()).toEqual({ message: "URL encurtada mal formatada" })
+    expect(stub.getLinkByShortCode).not.toHaveBeenCalled()
+  })
+
   it("returns 404 when link is not found", async () => {
     const stub = createLinksServiceStub()
     stub.getLinkByShortCode = vi.fn().mockRejectedValue(new LinkNotFoundError("not found"))

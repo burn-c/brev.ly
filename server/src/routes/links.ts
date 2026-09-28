@@ -8,6 +8,7 @@ import {
   ShortCodeAlreadyExistsError,
 } from "../errors/links-errors.js"
 import type { LinksService } from "../services/links-service.js"
+import { SHORT_CODE_REGEX } from "../utils/short-code.js"
 
 export interface LinksRoutesOptions {
   linksService: LinksService
@@ -24,7 +25,7 @@ const listLinksQuerySchema = z.object({
 })
 
 const shortCodeParamsSchema = z.object({
-  shortCode: z.string().min(1),
+  shortCode: z.string().min(1).regex(SHORT_CODE_REGEX),
 })
 
 const idParamsSchema = z.object({
