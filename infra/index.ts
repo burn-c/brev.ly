@@ -325,86 +325,103 @@ const dbIngressRule = new aws.ec2.SecurityGroupRule("brevly-db-allow-app", {
 
 const appImage = pulumi.interpolate`${repository.url}:${imageTag}`
 
-const fargateService = new awsx.ecs.FargateService("brevly-server", {
-  cluster: ecsCluster.arn,
-  desiredCount: 1,
-  continueBeforeSteadyState: true,
-  loadBalancers: [
+// IAM roles do ECS
+const ecsExecutionRole = new aws.iam.Role("brevly-server-execution", {
+  name: "brevly-server-execution",
+  assumeRolePolicy: JSON.stringify({
+    Version: "2012-10-17",
+    Statement: [
+      {
+        Effect: "Allow",
+        Principal: { Service: "ecs-tasks.amazonaws.com" },
+        Action: "sts:AssumeRole",
+      },
+    ],
+  }),
+  tags: commonTags,
+})
+
+const ecsTaskRole = new aws.iam.Role("brevly-server-task", {
+  name: "brevly-server-task",
+  assumeRolePolicy: JSON.stringify({
+    Version: "2012-10-17",
+    Statement: [
+      {
+        Effect: "Allow",
+        Principal: { Service: "ecs-tasks.amazonaws.com" },
+        Action: "sts:AssumeRole",
+      },
+    ],
+  }),
+  tags: commonTags,
+})
+
+new aws.iam.RolePolicyAttachment("brevly-server-exec-attach", {
+  role: ecsExecutionRole.name,
+  policyArn: "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
+})
+
+new aws.iam.RolePolicy("brevly-server-exec-policy", {
+  role: ecsExecutionRole.name,
+  policy: pulumi.output({
+    Version: "2012-10-17",
+    Statement: [
+      {
+        Sid: "CreateLogGroupAndGetSecret",
+        Effect: "Allow",
+        Action: [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+          "secretsmanager:GetSecretValue",
+        ],
+        Resource: [
+          "arn:aws:logs:us-east-1:488182246611:log-group:/ecs/brevly-server:*",
+          "arn:aws:logs:us-east-1:488182246611:log-group:/ecs/brevly-server",
+        ],
+      },
+      {
+        Sid: "GetDbSecret",
+        Effect: "Allow",
+        Action: ["secretsmanager:GetSecretValue"],
+        Resource: dbUrlSecret.arn,
+      },
+    ],
+  }),
+})
+
+new aws.iam.RolePolicy("brevly-server-task-policy", {
+  role: ecsTaskRole.name,
+  policy: pulumi.output({
+    Version: "2012-10-17",
+    Statement: [
+      {
+        Sid: "PutCsv",
+        Effect: "Allow",
+        Action: ["s3:PutObject"],
+        Resource: "arn:aws:s3:::brevly-csv-reports/*",
+      },
+    ],
+  }),
+})
+
+// Task definition explícita (evita recriação automática do awsx)
+const taskDefinition = new aws.ecs.TaskDefinition("brevly-server-task-def", {
+  family: "brevly-server",
+  networkMode: "awsvpc",
+  requiresCompatibilities: ["FARGATE"],
+  cpu: "256",
+  memory: "512",
+  executionRoleArn: ecsExecutionRole.arn,
+  taskRoleArn: ecsTaskRole.arn,
+  containerDefinitions: pulumi.jsonStringify([
     {
-      targetGroupArn: albTargetGroup.arn,
-      containerName: "brevly-server",
-      containerPort: 3333,
-    },
-  ],
-  networkConfiguration: {
-    assignPublicIp: false,
-    subnets: vpc.privateSubnetIds,
-    securityGroups: [appSecurityGroup.id],
-  },
-  taskDefinitionArgs: {
-    executionRole: {
-      args: {
-        inlinePolicies: [
-          {
-            name: "ecs-log-group-create",
-            policy: JSON.stringify({
-              Version: "2012-10-17",
-              Statement: [
-                {
-                  Sid: "CreateLogGroup",
-                  Effect: "Allow",
-                  Action: ["logs:CreateLogGroup"],
-                  Resource: "arn:aws:logs:us-east-1:488182246611:log-group:/ecs/brevly-server:*",
-                },
-              ],
-            }),
-          },
-          {
-            name: "brevly-db-secret-read",
-            policy: dbUrlSecret.arn.apply(arn =>
-              JSON.stringify({
-                Version: "2012-10-17",
-                Statement: [
-                  {
-                    Sid: "GetDbUrlSecret",
-                    Effect: "Allow",
-                    Action: ["secretsmanager:GetSecretValue"],
-                    Resource: arn,
-                  },
-                ],
-              })
-            ),
-          },
-        ],
-      },
-    },
-    taskRole: {
-      args: {
-        inlinePolicies: [
-          {
-            name: "brevly-csv-write",
-            policy: JSON.stringify({
-              Version: "2012-10-17",
-              Statement: [
-                {
-                  Sid: "PutCsv",
-                  Effect: "Allow",
-                  Action: ["s3:PutObject"],
-                  Resource: "arn:aws:s3:::brevly-csv-reports/*",
-                },
-              ],
-            }),
-          },
-        ],
-      },
-    },
-    container: {
       name: "brevly-server",
       image: appImage,
       cpu: 256,
       memory: 512,
       essential: true,
-      portMappings: [{ containerPort: 3333, hostPort: 3333 }],
+      portMappings: [{ containerPort: 3333, protocol: "tcp" }],
       secrets: [{ name: "DATABASE_URL", valueFrom: dbUrlSecret.arn }],
       environment: [
         { name: "PORT", value: "3333" },
@@ -425,7 +442,32 @@ const fargateService = new awsx.ecs.FargateService("brevly-server", {
         },
       },
     },
+  ]),
+  tags: commonTags,
+})
+
+// ECS Service (nativo) — não recria a task definition
+const ecsService = new aws.ecs.Service("brevly-server-service", {
+  name: "brevly-server",
+  cluster: ecsCluster.arn,
+  taskDefinition: taskDefinition.arn,
+  desiredCount: 1,
+  launchType: "FARGATE",
+  networkConfiguration: {
+    assignPublicIp: false,
+    subnets: vpc.privateSubnetIds,
+    securityGroups: [appSecurityGroup.id],
   },
+  loadBalancers: [
+    {
+      targetGroupArn: albTargetGroup.arn,
+      containerName: "brevly-server",
+      containerPort: 3333,
+    },
+  ],
+  deploymentMinimumHealthyPercent: 0,
+  waitForSteadyState: false,
+  tags: commonTags,
 })
 
 export const frontendBucketName = frontendBucket.bucket
