@@ -110,6 +110,19 @@ describe("buildS3ClientOptions - aws", () => {
     expect(publicUrl).toBe("https://d1.example.net")
   })
 
+  it("builds client options without credentials for ECS task role", () => {
+    const { clientOptions } = buildS3ClientOptions({
+      provider: "aws",
+      aws: {
+        region: "us-east-1",
+        bucket: "brevly-bucket",
+        cdnUrl: "https://d1.example.net",
+      },
+    })
+    expect(clientOptions.region).toBe("us-east-1")
+    expect(clientOptions.credentials).toBeUndefined()
+  })
+
   it("uses a custom endpoint when provided", () => {
     const { clientOptions } = buildS3ClientOptions({
       provider: "aws",

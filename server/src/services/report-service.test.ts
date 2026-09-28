@@ -143,6 +143,7 @@ describe("createReportService", () => {
     const call = storage.calls[0]
     expect(call.contentType).toBe("text/csv")
     expect(call.key).toMatch(/\.csv$/)
+    expect(call.key).toMatch(/^csv\/.+\.csv$/)
     expect(call.key.length).toBeGreaterThan(0)
 
     const lines = call.body.split("\n").filter(line => line !== "")

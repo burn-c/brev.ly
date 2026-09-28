@@ -13,8 +13,8 @@ export interface StorageConfig {
   }
   aws?: {
     region: string
-    accessKeyId: string
-    secretAccessKey: string
+    accessKeyId?: string
+    secretAccessKey?: string
     bucket: string
     cdnUrl: string
     endpoint?: string
@@ -57,14 +57,16 @@ export function buildS3ClientOptions(config: StorageConfig): {
   }
 
   const a = config.aws
-  if (!a?.region || !a.accessKeyId || !a.secretAccessKey || !a.bucket || !a.cdnUrl) {
+  if (!a?.region || !a.bucket || !a.cdnUrl) {
     throw new Error("AWS S3 storage is not configured")
   }
   return {
     clientOptions: {
       region: a.region,
       endpoint: a.endpoint || undefined,
-      credentials: { accessKeyId: a.accessKeyId, secretAccessKey: a.secretAccessKey },
+      ...(a.accessKeyId && a.secretAccessKey
+        ? { credentials: { accessKeyId: a.accessKeyId, secretAccessKey: a.secretAccessKey } }
+        : {}),
       requestChecksumCalculation: "WHEN_REQUIRED",
       responseChecksumValidation: "WHEN_REQUIRED",
     },

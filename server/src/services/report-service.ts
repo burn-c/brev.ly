@@ -48,7 +48,7 @@ export function createReportService(
       }
 
       const csv = buildLinksCsv(links)
-      const key = `${randomUUID()}.csv`
+      const key = `csv/${randomUUID()}.csv`
       const { url } = await storage.putObject({ key, body: csv, contentType: "text/csv" })
       return { url }
     },

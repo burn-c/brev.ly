@@ -59,8 +59,8 @@ function createDefaultDependencies(options: BuildAppOptions) {
     },
     aws: {
       region: env.AWS_REGION,
-      accessKeyId: env.AWS_ACCESS_KEY_ID,
-      secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
+      accessKeyId: env.AWS_ACCESS_KEY_ID || undefined,
+      secretAccessKey: env.AWS_SECRET_ACCESS_KEY || undefined,
       bucket: env.AWS_S3_BUCKET,
       cdnUrl: env.AWS_CDN_URL,
       endpoint: env.AWS_ENDPOINT || undefined,
