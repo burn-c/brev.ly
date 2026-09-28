@@ -102,32 +102,30 @@ describe("csvEscape", () => {
 describe("buildLinksCsv", () => {
   it("returns only the header for empty links", () => {
     expect(buildLinksCsv([])).toBe(
-      "url_original,url_encurtada,contagem_de_acessos,data_de_criacao\n"
+      "id,url_original,url_encurtada,contagem_de_acessos,data_de_criacao\n"
     )
   })
 
   it("writes one line per link with fields in order", () => {
-    const links = [
-      makeLink({
-        originalUrl: "https://example.com/a",
-        shortCode: "short1",
-        accessCount: 5,
-        createdAt: new Date("2024-02-01T10:00:00.000Z"),
-      }),
-      makeLink({
-        originalUrl: "https://example.com/b",
-        shortCode: "short2",
-        accessCount: 0,
-        createdAt: new Date("2024-03-01T12:30:00.000Z"),
-      }),
-    ]
+    const first = makeLink({
+      originalUrl: "https://example.com/a",
+      shortCode: "short1",
+      accessCount: 5,
+      createdAt: new Date("2024-02-01T10:00:00.000Z"),
+    })
+    const second = makeLink({
+      originalUrl: "https://example.com/b",
+      shortCode: "short2",
+      accessCount: 0,
+      createdAt: new Date("2024-03-01T12:30:00.000Z"),
+    })
 
-    const csv = buildLinksCsv(links)
+    const csv = buildLinksCsv([first, second])
     const lines = csv.split("\n").filter(line => line !== "")
 
-    expect(lines[0]).toBe("url_original,url_encurtada,contagem_de_acessos,data_de_criacao")
-    expect(lines[1]).toBe("https://example.com/a,short1,5,2024-02-01T10:00:00.000Z")
-    expect(lines[2]).toBe("https://example.com/b,short2,0,2024-03-01T12:30:00.000Z")
+    expect(lines[0]).toBe("id,url_original,url_encurtada,contagem_de_acessos,data_de_criacao")
+    expect(lines[1]).toBe(`${first.id},https://example.com/a,short1,5,2024-02-01T10:00:00.000Z`)
+    expect(lines[2]).toBe(`${second.id},https://example.com/b,short2,0,2024-03-01T12:30:00.000Z`)
   })
 })
 
@@ -148,7 +146,7 @@ describe("createReportService", () => {
 
     const lines = call.body.split("\n").filter(line => line !== "")
     expect(lines).toHaveLength(4)
-    expect(lines[0]).toBe("url_original,url_encurtada,contagem_de_acessos,data_de_criacao")
+    expect(lines[0]).toBe("id,url_original,url_encurtada,contagem_de_acessos,data_de_criacao")
     expect(call.body).toContain("short0")
     expect(call.body).toContain("short1")
     expect(call.body).toContain("short2")
@@ -172,7 +170,7 @@ describe("createReportService", () => {
 
     const dataLines = storage.calls[0].body
       .split("\n")
-      .filter(line => line !== "" && !line.startsWith("url_original"))
+      .filter(line => line !== "" && !line.startsWith("id,url_original"))
     expect(dataLines).toHaveLength(2500)
     expect(result.url).toMatch(/^http:\/\/cdn\.example\.com\/.+\.csv$/)
   })
@@ -186,7 +184,7 @@ describe("createReportService", () => {
 
     expect(storage.calls).toHaveLength(1)
     expect(storage.calls[0].body).toBe(
-      "url_original,url_encurtada,contagem_de_acessos,data_de_criacao\n"
+      "id,url_original,url_encurtada,contagem_de_acessos,data_de_criacao\n"
     )
     expect(storage.calls[0].contentType).toBe("text/csv")
     expect(result.url).toBe(`http://cdn.example.com/${storage.calls[0].key}`)

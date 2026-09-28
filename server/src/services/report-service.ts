@@ -8,7 +8,7 @@ export interface ReportService {
   exportLinksCsv(): Promise<{ url: string }>
 }
 
-const CSV_HEADER = "url_original,url_encurtada,contagem_de_acessos,data_de_criacao"
+const CSV_HEADER = "id,url_original,url_encurtada,contagem_de_acessos,data_de_criacao"
 const PAGE_SIZE = 1000
 
 export function csvEscape(value: string): string {
@@ -21,6 +21,7 @@ export function csvEscape(value: string): string {
 export function buildLinksCsv(links: Link[]): string {
   const rows = links.map(link =>
     [
+      csvEscape(link.id),
       csvEscape(link.originalUrl),
       csvEscape(link.shortCode),
       csvEscape(String(link.accessCount)),
