@@ -184,16 +184,21 @@ jobs:
           PRIVATE_SUBNETS: ${{ env.PRIVATE_SUBNETS }}
         run: |
           cat > /tmp/overrides.json <<EOF
-          {"containerOverrides":[{"name":"brevly-server","command":["node","./node_modules/drizzle-kit/bin.cjs","migrate"],"environment":[{"name":"DATABASE_URL","value":"postgres://postgres:$DB_PASSWORD@$DB_ENDPOINT/brevly"},{"name":"NODE_ENV","value":"production"}]}]}
+          {"containerOverrides":[{"name":"brevly-server","command":["node","-e","const{drizzle}=require('drizzle-orm/node-postgres');const{migrate}=require('drizzle-orm/node-postgres/migrator');const{Pool}=require('pg');const p=new Pool({connectionString:process.env.DATABASE_URL});const db=drizzle(p);migrate(db,{migrationsFolder:'/app/drizzle'}).then(()=>process.exit(0)).catch(e=>{console.error('MIGRATE_ERRO:',e.message);process.exit(1)})"],"environment":[{"name":"DATABASE_URL","value":"postgres://postgres:$DB_PASSWORD@$DB_ENDPOINT/brevly?sslmode=no-verify"},{"name":"NODE_ENV","value":"production"}]}]}
           EOF
-          aws ecs run-task \
+          TASK_ARN=$(aws ecs run-task \
             --region "$AWS_REGION" \
             --cluster brevly-cluster \
             --launch-type FARGATE \
             --task-definition "$TASK_DEF" \
             --network-configuration "awsvpcConfiguration={subnets=[$PRIVATE_SUBNETS]}" \
-            --overrides file:///tmp/overrides.json
-          echo "ECS migrate task launched (verifique o ECS para conclusão)"
+            --overrides file:///tmp/overrides.json \
+            --query 'tasks[0].taskArn' --output text)
+          echo "migrate task: $TASK_ARN"
+          aws ecs wait tasks-stopped --region "$AWS_REGION" --cluster brevly-cluster --tasks "$TASK_ARN"
+          EXIT=$(aws ecs describe-tasks --region "$AWS_REGION" --cluster brevly-cluster --tasks "$TASK_ARN" --query 'tasks[0].containers[0].exitCode' --output text)
+          echo "migrate exit code: $EXIT"
+          if [ "$EXIT" != "0" ]; then exit 1; fi
 
   deploy-web:
     name: Deploy web (S3 + CloudFront)

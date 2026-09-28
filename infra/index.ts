@@ -256,6 +256,13 @@ const fargateService = new awsx.ecs.FargateService("brevly-server", {
   cluster: ecsCluster.arn,
   desiredCount: 1,
   continueBeforeSteadyState: true,
+  loadBalancers: [
+    {
+      targetGroupArn: alb.defaultTargetGroup.arn,
+      containerName: "brevly-server",
+      containerPort: 3333,
+    },
+  ],
   networkConfiguration: {
     assignPublicIp: false,
     subnets: vpc.privateSubnetIds,
@@ -294,7 +301,7 @@ const fargateService = new awsx.ecs.FargateService("brevly-server", {
         { name: "NODE_ENV", value: "production" },
         {
           name: "DATABASE_URL",
-          value: pulumi.interpolate`postgres://postgres:${database.password}@${database.endpoint}/brevly`,
+          value: pulumi.interpolate`postgres://postgres:${database.password}@${database.endpoint}/brevly?sslmode=no-verify`,
         },
         { name: "FRONTEND_URL", value: "https://cdn.brevly.com.br" },
         { name: "STORAGE_PROVIDER", value: "aws" },
