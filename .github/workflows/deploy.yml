@@ -133,6 +133,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Set stack config
+        working-directory: infra
         env:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         run: |
