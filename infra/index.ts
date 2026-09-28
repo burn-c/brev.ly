@@ -198,7 +198,16 @@ const alb = new awsx.lb.ApplicationLoadBalancer("brevly-alb", {
   internal: false,
   securityGroups: [albSecurityGroup.id],
   subnetIds: vpc.publicSubnetIds,
-  defaultTargetGroup: { port: 3333 },
+  defaultTargetGroup: {
+    port: 3333,
+    healthCheck: {
+      path: "/health",
+      healthyThreshold: 3,
+      unhealthyThreshold: 3,
+      interval: 30,
+      timeout: 5,
+    },
+  },
   listener: { port: 80 },
   tags: commonTags,
 })
