@@ -135,7 +135,8 @@ jobs:
       - name: Install dependencies
         working-directory: infra
         run: pnpm install --frozen-lockfile
-        working-directory: infra
+
+      - name: Set stack config
         env:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         run: |
