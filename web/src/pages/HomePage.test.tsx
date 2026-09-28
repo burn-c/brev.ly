@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { render, screen } from "@testing-library/react"
+import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { ToastProvider } from "../components/Toast"
@@ -134,9 +134,8 @@ describe("HomePage", () => {
     expect(await screen.findByText("Não foi possível criar o link")).toBeInTheDocument()
   })
 
-  it("deletes a link after confirming", async () => {
+  it("deletes a link after confirming in the dialog", async () => {
     const user = userEvent.setup()
-    vi.spyOn(window, "confirm").mockReturnValue(true)
     vi.mocked(listLinks).mockResolvedValue({
       data: [link],
       meta: { page: 1, pageSize: 100, total: 1, totalPages: 1 },
@@ -146,14 +145,16 @@ describe("HomePage", () => {
 
     await screen.findByText("http://localhost:5173/abc123")
     await user.click(screen.getByRole("button", { name: "Excluir" }))
+    const dialog = screen.getByRole("dialog")
+    expect(dialog).toBeInTheDocument()
+    await user.click(within(dialog).getByRole("button", { name: "Excluir" }))
 
     expect(vi.mocked(deleteLink)).toHaveBeenCalledWith("1")
     expect(await screen.findByText("Link excluído com sucesso")).toBeInTheDocument()
   })
 
-  it("does not delete a link when the confirmation is cancelled", async () => {
+  it("does not delete a link when the dialog is cancelled", async () => {
     const user = userEvent.setup()
-    vi.spyOn(window, "confirm").mockReturnValue(false)
     vi.mocked(listLinks).mockResolvedValue({
       data: [link],
       meta: { page: 1, pageSize: 100, total: 1, totalPages: 1 },
@@ -162,6 +163,7 @@ describe("HomePage", () => {
 
     await screen.findByText("http://localhost:5173/abc123")
     await user.click(screen.getByRole("button", { name: "Excluir" }))
+    await user.click(screen.getByRole("button", { name: "Cancelar" }))
 
     expect(vi.mocked(deleteLink)).not.toHaveBeenCalled()
   })
