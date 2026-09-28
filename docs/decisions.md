@@ -366,3 +366,71 @@ A senha do RDS ficava em **plaintext** no `environment` da task definition do EC
 - Custo do secret ~US$0,40/mês.
 - A role antiga `GitHubActionsOIDCRole` permanece intacta para o upload-widget.
 - Redeploy determinístico via tag `sha` (config `brevly-infra:imageTag`).
+
+---
+
+## ADR-012 — Isolamento do CI/CD por role OIDC dedicada
+
+- **Status:** Aceita
+- **Data:** 2026-09-28
+
+### Contexto
+
+O CI do Brev.ly compartilhava a role OIDC `GitHubActionsOIDCRole` (usada pelo upload-widget-server) e herdam permissões cruzadas: o trust incluía `repo:burn-c/brev.ly:*` e o wildcard `repo:burn-c@*:*:*`, e a policy do Brev.ly estava anexada à role compartilhada. Isso permitia que qualquer repo do `burn-c` (ou o upload-widget) assumisse permissões do Brev.ly.
+
+### Alternativas consideradas
+
+- **Manter role compartilhada** com trust/policy ajustados: menor isolamento (blast radius amplo).
+- **Role dedicada `GitHubActionsOIDCRoleBrevly`** com trust restrito a `burn-c/brev.ly` e policy escopada por ARN.
+
+### Decisão
+
+- Criar `GitHubActionsOIDCRoleBrevly` com trust **somente** para `burn-c/brev.ly:*` (e o formato `repo:burn-c@*/brev.ly@*:*` dos IDs do GitHub).
+- Policy `GitHubActionsBrevlyPolicy` escopada por ARN (S3/ECR/ECS/ELB/Logs/Secrets/IAM PassRole). `cloudfront:*` permanece `*` por limitação da AWS.
+- **Remover** do trust da role compartilhada: `repo:burn-c/brev.ly:*` e os wildcards `repo:burn-c@*:*:*`; **remover** a policy `GitHubActionsBrevlyPolicy` dela. A role compartilhada volta a servir só o upload-widget (`GitHubActionsECSPolicy`).
+- `AWS_OIDC_ROLE_ARN` do repo Brev.ly passa a apontar para a role dedicada.
+
+### Por quê
+
+- Isolamento por "blast radius mínimo": o Brev.ly não herda permissões de outras aplicações e vice-versa.
+- O upload-widget usa a role por ARN hardcoded no workflow dele — continua funcionando sem o acesso ao Brev.ly.
+- `burndev.iac` usa credenciais estáticas (fora do OIDC) — não afetado.
+
+### Consequências
+
+- Ações de listagem ECS (`ListServices`, `ListTaskDefinitions`, `ListTasks`, `ListClusters`) exigem `Resource: *` (limitação AWS para list actions) — isoladas na role dedicada.
+- `iam:PassRole` restrito às roles `brevly-server-*` com condição `iam:PassedToService=ecs-tasks.amazonaws.com`.
+- Deploy do Brev.ly validado de ponta a ponta (build → pulumi up → migrate → web).
+
+---
+
+## ADR-013 — Estratégia de imagem do ECS (`latest` + force redeploy)
+
+- **Status:** Aceita
+- **Data:** 2026-09-28
+
+### Contexto
+
+O deploy inicial tentou usar tag `:sha` na task definition do ECS. Cada `pulumi up` recriava a task def, e o provider `@pulumi/aws` encontrava eventual-consistency do ECS (`RegisterTaskDefinition` retorna sucesso, mas o `DescribeTaskDefinition` subsequente falha com "couldn't find resource"), fazendo o deploy falhar intermitentemente.
+
+### Alternativas consideradas
+
+- **Tag `:sha` na task def:** determinístico, mas expõe o bug de eventual-consistency do provider (falhas intermitentes).
+- **`latest` + `--force-new-deployment`:** o build ECR publica `latest`, o `pulumi up` não recria a task def, e um `aws ecs update-service --force-new-deployment` força o re-pull da imagem nova. **Estável e validado.**
+
+### Decisão
+
+- Task definition usa `family: "brevly-server"` e imagem `:latest`.
+- Após o `pulumi up`, o workflow executa `aws ecs update-service --service brevly-server-api --force-new-deployment` para re-puxar a `latest` nova.
+- O build ECR publica `${{ github.sha }}` (imutável, para rastreabilidade) **e** `latest`.
+
+### Por quê
+
+- Evita o bug de eventual-consistency do provider ECS (o erro `couldn't find resource` ao re-ler a task def recém-criada).
+- Fluxo estável validado em deploy real (build → pulumi up → migrate → web, todos verdes).
+
+### Consequências
+
+- Menos determinístico que `:sha` (a task def sempre aponta para `latest`), mas com `force-new-deployment` o resultado é idêntico em produção.
+- Para rollback: `docker build` de um commit anterior + push `latest` + force redeploy (ou apontar para a tag `sha` manualmente).
+- Documentado como limitação conhecida; `:sha` fica como melhoria futura se o provider corrigir a eventual-consistency.
