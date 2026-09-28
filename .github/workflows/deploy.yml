@@ -173,7 +173,7 @@ jobs:
           AWS_REGION=us-east-1 pulumi login s3://brevly-pulumi-state
           echo "DB_ENDPOINT=$(AWS_REGION=us-east-1 pulumi stack output databaseEndpoint -s brevly-prod)" >> "$GITHUB_ENV"
           echo "PRIVATE_SUBNETS=$(AWS_REGION=us-east-1 pulumi stack output privateSubnetIds -s brevly-prod --json | python3 -c "import sys,json;print(','.join(json.load(sys.stdin)))")" >> "$GITHUB_ENV"
-          echo "TASK_DEF=$(aws ecs describe-task-definition --region us-east-1 --task-definition brevly-server --query 'taskDefinition.taskDefinitionArn' --output text)" >> "$GITHUB_ENV"
+          echo "TASK_DEF=$(aws ecs list-task-definitions --region us-east-1 --sort DESC --query 'taskDefinitionArns[0]' --output text)" >> "$GITHUB_ENV"
 
       - name: Run migrations via ECS one-off task
         env:
@@ -183,13 +183,16 @@ jobs:
           DB_ENDPOINT: ${{ env.DB_ENDPOINT }}
           PRIVATE_SUBNETS: ${{ env.PRIVATE_SUBNETS }}
         run: |
+          cat > /tmp/overrides.json <<EOF
+          {"containerOverrides":[{"name":"brevly-server","command":["node","./node_modules/drizzle-kit/bin.cjs","migrate"],"environment":[{"name":"DATABASE_URL","value":"postgres://postgres:$DB_PASSWORD@$DB_ENDPOINT/brevly"},{"name":"NODE_ENV","value":"production"}]}]}
+          EOF
           aws ecs run-task \
             --region "$AWS_REGION" \
             --cluster brevly-cluster \
             --launch-type FARGATE \
             --task-definition "$TASK_DEF" \
             --network-configuration "awsvpcConfiguration={subnets=[$PRIVATE_SUBNETS]}" \
-            --overrides "{\"containerOverrides\":[{\"name\":\"brevly-server\",\"command\":[\"node\",\"./node_modules/drizzle-kit/bin.cjs\",\"migrate\"],\"environment\":[{\"name\":\"DATABASE_URL\",\"value\":\"postgres://postgres:$DB_PASSWORD@$DB_ENDPOINT/brevly\"},{\"name\":\"NODE_ENV\",\"value\":\"production\"}]}]}"
+            --overrides file:///tmp/overrides.json
           echo "ECS migrate task launched (verifique o ECS para conclusão)"
 
   deploy-web:
