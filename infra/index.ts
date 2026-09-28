@@ -292,4 +292,5 @@ export const cdnDistributionId = cdnDistribution.id
 export const apiUrl = pulumi.interpolate`http://${alb.loadBalancer.dnsName}`
 export const databaseEndpoint = database.endpoint
 export const ecrRepositoryUrl = repository.url
+export const privateSubnetIds = vpc.privateSubnetIds
 export { accountId }
