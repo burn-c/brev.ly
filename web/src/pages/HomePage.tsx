@@ -52,8 +52,8 @@ function SkeletonRows() {
   return (
     <div className="animate-pulse" aria-hidden="true">
       {SKELETON_KEYS.map(key => (
-        <div key={key} className="flex items-center gap-4 border-t border-gray-200 py-2 md:gap-5">
-          <div className="min-w-0 flex-1 space-y-2">
+        <div key={key} className="flex items-center gap-4 border-t border-gray-200 py-0.5 md:gap-5">
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
             <div className="h-3 w-1/2 rounded bg-gray-300" />
             <div className="h-2.5 w-2/3 rounded bg-gray-300" />
           </div>
@@ -81,6 +81,7 @@ function HomePage() {
   } = useForm<FormValues>({
     defaultValues: { originalUrl: "", shortCode: "" },
   })
+  const hasFormError = Boolean(errors.originalUrl || errors.shortCode)
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["links"],
@@ -168,14 +169,18 @@ function HomePage() {
   const links = data?.data ?? []
 
   return (
-    <div className="flex min-h-dvh flex-col bg-gray-200">
+    <div className="flex min-h-dvh flex-col bg-gray-200 md:h-dvh md:overflow-hidden">
       <header className="mx-auto w-full max-w-[980px] px-3 py-8 md:px-0 md:py-10">
         <Logo className="h-6 w-auto" />
       </header>
 
-      <main className="mx-auto w-full max-w-[980px] flex-1 px-3 pb-10 md:px-0">
-        <div className="flex flex-col gap-5 md:flex-row">
-          <section className="rounded-lg bg-gray-100 p-6 md:w-[380px] md:shrink-0 md:p-8">
+      <main className="mx-auto flex w-full max-w-[980px] flex-1 flex-col px-3 pb-10 md:min-h-0 md:overflow-hidden md:px-0 md:pb-0">
+        <div className="flex flex-1 flex-col gap-5 md:min-h-0 md:flex-row md:items-start">
+          <section
+            className={`rounded-lg bg-gray-100 p-6 md:w-[380px] md:shrink-0 md:p-8 ${
+              hasFormError ? "md:h-auto" : "md:h-[340px]"
+            }`}
+          >
             <h2 className="text-lg font-bold text-gray-600">Novo link</h2>
             <form className="mt-6 flex flex-col gap-6" onSubmit={handleSubmit(onSubmit)}>
               <div className="flex flex-col gap-4">
@@ -203,8 +208,8 @@ function HomePage() {
             </form>
           </section>
 
-          <section className="rounded-lg bg-gray-100 p-6 md:flex-1 md:p-8">
-            <div className="flex items-center justify-between gap-4">
+          <section className="flex min-h-0 flex-col rounded-lg bg-gray-100 p-6 md:flex-1 md:self-stretch md:p-8">
+            <div className="flex shrink-0 items-center justify-between">
               <h2 className="text-lg font-bold text-gray-600">Meus links</h2>
               <Button
                 variant="secondary"
@@ -217,54 +222,58 @@ function HomePage() {
               </Button>
             </div>
 
-            {isLoading ? (
-              <SkeletonRows />
-            ) : isError ? (
-              <div className="flex flex-col items-center gap-3 border-t border-gray-200 py-10 text-center">
-                <p className="text-xs uppercase text-gray-500">
-                  Não foi possível carregar os links
-                </p>
-                <Button variant="secondary" size="sm" onClick={() => refetch()}>
-                  Tentar novamente
-                </Button>
-              </div>
-            ) : links.length === 0 ? (
-              <div className="flex flex-col items-center gap-3 border-t border-gray-200 py-4 pb-6 text-center">
-                <Link size={32} className="text-gray-500" aria-hidden="true" />
-                <p className="text-xs uppercase text-gray-500">
-                  ainda não existem links cadastrados
-                </p>
-              </div>
-            ) : (
-              <ul>
-                {links.map(link => (
-                  <li
-                    key={link.id}
-                    className="flex items-center gap-4 border-t border-gray-200 py-2 md:gap-5"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-semibold text-blue-base">
-                        {buildShortUrl(link.shortCode)}
-                      </span>
-                      <p className="truncate text-xs text-gray-500">{link.originalUrl}</p>
-                    </div>
-                    <span className="whitespace-nowrap text-xs text-gray-500">
-                      {link.accessCount} acessos
-                    </span>
-                    <IconButton label="Copiar" onClick={() => handleCopy(link.shortCode)}>
-                      <Copy size={16} aria-hidden="true" />
-                    </IconButton>
-                    <IconButton
-                      label="Excluir"
-                      onClick={() => handleDelete(link)}
-                      disabled={deleteMutation.isPending}
+            <div className="mt-5 min-h-0 flex-1 overflow-y-auto">
+              {isLoading ? (
+                <SkeletonRows />
+              ) : isError ? (
+                <div className="flex flex-col items-center gap-3 border-t border-gray-200 py-10 text-center">
+                  <p className="text-xs uppercase text-gray-500">
+                    Não foi possível carregar os links
+                  </p>
+                  <Button variant="secondary" size="sm" onClick={() => refetch()}>
+                    Tentar novamente
+                  </Button>
+                </div>
+              ) : links.length === 0 ? (
+                <div className="flex flex-col items-center gap-3 border-t border-gray-200 py-4 pb-6 text-center">
+                  <Link size={32} className="text-gray-500" aria-hidden="true" />
+                  <p className="text-xs uppercase text-gray-500">
+                    ainda não existem links cadastrados
+                  </p>
+                </div>
+              ) : (
+                <ul>
+                  {links.map(link => (
+                    <li
+                      key={link.id}
+                      className="flex items-center gap-4 border-t border-gray-200 py-0.5 md:gap-5"
                     >
-                      <Trash2 size={16} aria-hidden="true" />
-                    </IconButton>
-                  </li>
-                ))}
-              </ul>
-            )}
+                      <div className="flex min-w-0 flex-1 flex-col gap-1">
+                        <span className="block truncate text-sm font-semibold text-blue-base">
+                          {buildShortUrl(link.shortCode)}
+                        </span>
+                        <p className="truncate text-xs text-gray-500">{link.originalUrl}</p>
+                      </div>
+                      <span className="whitespace-nowrap text-xs text-gray-500">
+                        {link.accessCount} acessos
+                      </span>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <IconButton label="Copiar" onClick={() => handleCopy(link.shortCode)}>
+                          <Copy size={16} aria-hidden="true" />
+                        </IconButton>
+                        <IconButton
+                          label="Excluir"
+                          onClick={() => handleDelete(link)}
+                          disabled={deleteMutation.isPending}
+                        >
+                          <Trash2 size={16} aria-hidden="true" />
+                        </IconButton>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </section>
         </div>
       </main>
