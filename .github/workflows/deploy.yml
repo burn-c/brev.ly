@@ -37,10 +37,6 @@ jobs:
           cache: pnpm
           cache-dependency-path: infra/pnpm-lock.yaml
 
-      - name: Debug OIDC sub claim
-        run: |
-          python3 -c "import base64,json,os,urllib.request; req=urllib.request.Request(os.environ['ACTIONS_ID_TOKEN_REQUEST_URL']+'&audience=sts.amazonaws.com',headers={'Authorization':'Bearer '+os.environ['ACTIONS_ID_TOKEN_REQUEST_TOKEN']}); raw=json.loads(urllib.request.urlopen(req).read())['value']; p=raw.split('.')[1]; p+='='*(-len(p)%4); c=json.loads(base64.urlsafe_b64decode(p)); print('SUB:',c.get('sub')); print('AUD:',c.get('aud'))"
-
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
