@@ -53,7 +53,7 @@
 - **Deploy aplicado e funcional (2026-09-28):** VPC, RDS (available), CloudFront (CDN), ECS Fargate (1 task healthy no ALB), ECR. API validada via ALB.
 - **Hardening (2026-09-28, Fase de segurança):** domínio próprio `brev-ly.burndev.app` + `api.brev-ly.burndev.app`; buckets S3 **privados via OAC** (policies públicas removidas); `DATABASE_URL` via **Secrets Manager** (ADR-011); redeploy via tag `sha`; ALB recriado (novo DNS); ECR `scanOnPush`; **role OIDC dedicada** `GitHubActionsOIDCRoleBrevly` (isola do upload-widget — ADR-010/011). Infra aplicada com `enableTls=false` (cert ACM `PENDING_VALIDATION`).
 - **Backend de estado:** `s3://brevly-pulumi-state` (**bucket exclusivo do Brev.ly**, versionado — substitui o `burn-pulumi-state` do ADR-006, inacessível desta conta; **ADR-009**).
-- **CI/CD ativo (Fase 7):** workflows `pr.yml` (lint/typecheck/test/preview) e `deploy.yml` (infra → ECR → redeploy → migrate → web) **verdes** em `main`. OIDC via `GitHubActionsOIDCRoleBrevly` (dedicada), secrets `AWS_OIDC_ROLE_ARN` + `DB_PASSWORD`.
+- **CI/CD ativo e validado (Fase 7 concluída):** workflows `pr.yml` (lint/typecheck/test/preview) e `deploy.yml` (ECR → pulumi up → redeploy → migrate → web) **verdes**. OIDC via role **dedicada** `GitHubActionsOIDCRoleBrevly` (isola do upload-widget — ADR-012), secrets `AWS_OIDC_ROLE_ARN` + `DB_PASSWORD`, variable `BREVLY_ENABLE_TLS=true`. Deploy 100% verde validado: build ✓, pulumi up ✓, migrate (ECS task) ✓, web ✓. PR check verde (3 jobs).
 - Versões pinadas `@pulumi/aws@7.35.0` + `@pulumi/awsx@3.6.0` (compatíveis com os plugins já instalados localmente).
 - Ver [`infra-pulumi.md`](./infra-pulumi.md), [`deploy.md`](./deploy.md) e [`squarespace-dns.md`](./squarespace-dns.md).
 
@@ -108,11 +108,9 @@
 
 ## Próximos passos
 
-1. **Hardening — DNS manual (você):** adicionar os 4 CNAMEs no painel da Squarespace (`docs/squarespace-dns.md`) e aguardar o cert ACM `ISSUED`.
-2. **Hardening — ativar TLS (F4):** após `ISSUED`, `pulumi config set brevly-infra:enableTls true` + `pulumi up` (ou `BREVLY_ENABLE_TLS=true` no GitHub) → CloudFront alias + ALB 443 + redirect. Depois validar end-to-end (F5).
-3. Fase 4 — Front-end (finalização): revisão visual contra o `design-spec.md` (Desktop 1366×720 e Mobile 390px) e testes manuais dos fluxos.
-4. Fase 8 — Testes e2e/aceite.
-5. Fase 9 — Entrega (repo público, push, submissão FTR).
+1. Fase 4 — Front-end (finalização): revisão visual contra o `design-spec.md` (Desktop 1366×720 e Mobile 390px) e testes manuais dos fluxos.
+2. Fase 8 — Testes e2e/aceite.
+3. Fase 9 — Entrega (repo público, push, submissão FTR).
 
 ## Como atualizar este documento
 

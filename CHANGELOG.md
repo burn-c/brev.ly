@@ -2,6 +2,25 @@
 
 Todas as mudanças notáveis do projeto serão documentadas neste arquivo, seguindo o estilo [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [0.8.0] - 2026-09-28
+
+### Adicionado
+
+- **Domínio próprio + HTTPS + OAC** (hardening do deploy): `brev-ly.burndev.app` (front/redirect via CloudFront) e `api.brev-ly.burndev.app` (API via ALB), certificado ACM com SANs, redirect HTTP→HTTPS, buckets S3 **privados via Origin Access Control** (policies públicas removidas). TLS ativado via `BREVLY_ENABLE_TLS=true`.
+- **Isolamento do CI/CD** (ADR-012): role OIDC **dedicada** `GitHubActionsOIDCRoleBrevly` (trust restrito a `burn-c/brev.ly`), policy escopada por ARN; role compartilhada do upload-widget limpa (sem acesso ao Brev.ly).
+- **Secrets Manager** (ADR-011): `DATABASE_URL` do RDS via secret (`brevly/DATABASE_URL`), senha fora do env da task def.
+- **ECS nativo** (`aws.ecs.TaskDefinition` + `aws.ecs.Service`), service `brevly-server-api`, redeploy via `latest` + `--force-new-deployment` (ADR-013).
+- **Guia `docs/squarespace-dns.md`** com os CNAMEs reais.
+- **CI/CD validado**: `deploy.yml` 100% verde (build ECR → pulumi up → migrate via ECS → web) e `pr.yml` verde (server/web/preview).
+
+### Corrigido
+
+- **Isolamento**: removidos `repo:burn-c/brev.ly:*` e wildcards `repo:burn-c@*:*:*` do trust da role compartilhada; removida a policy `GitHubActionsBrevlyPolicy` dela.
+- **Permissões do deploy**: `ecs:ListTaskDefinitions` em `*` (list action), `iam:PassRole` para as roles nativas `brevly-server-execution`/`brevly-server-task` com `PassedToService`.
+- **Eventual-consistency ECS**: evitado usando `latest` + force redeploy (ADR-013) em vez de `:sha` na task def.
+- **Service órfão** `brevly-server-2b77deb` (awsx antigo) removido; ECS service renomeado para `brevly-server-api` para evitar conflito de draining.
+- **`.dockerignore`**: `drizzle/meta` incluído na imagem (migrate via ECS).
+
 ## [0.7.1] - 2026-09-28
 
 ### Adicionado
