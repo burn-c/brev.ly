@@ -406,9 +406,8 @@ new aws.iam.RolePolicy("brevly-server-task-policy", {
 })
 
 // Task definition explícita (evita recriação automática do awsx)
-// family único por imageTag → cada deploy cria uma task def nova (sem replace/duplicação no state)
 const taskDefinition = new aws.ecs.TaskDefinition("brevly-server-task-def", {
-  family: imageTag === "latest" ? "brevly-server" : `brevly-server-${imageTag.slice(0, 8)}`,
+  family: "brevly-server",
   networkMode: "awsvpc",
   requiresCompatibilities: ["FARGATE"],
   cpu: "256",
@@ -449,7 +448,7 @@ const taskDefinition = new aws.ecs.TaskDefinition("brevly-server-task-def", {
 
 // ECS Service (nativo) — não recria a task definition
 const ecsService = new aws.ecs.Service("brevly-server-service", {
-  name: "brevly-server-app",
+  name: "brevly-server-api",
   cluster: ecsCluster.arn,
   taskDefinition: taskDefinition.arn,
   desiredCount: 1,
