@@ -46,15 +46,16 @@
 - **Fase 4 em andamento (2026-09-27):** páginas implementadas — `/` (HomePage: formulário RHF+Zod, listagem TanStack Query, delete, CSV, empty/loading/skeleton, copy), `/:url-encurtada` (RedirectPage: GET → PATCH access → `window.location`, fallback "Acesse aqui", 404 → NotFoundPage), `*` (NotFoundPage com 404.svg). Componentes: `Button` (primary/secondary), `IconButton`, `Input` (default/active/error + Warning), `Logo`/`LogoIcon`, `Toast` (Provider + `useToast`). Cliente API em `src/lib/api.ts`. Verificação (lint/typecheck/build) verde.
 - **Regra:** agentes de layout devem atualizar esta seção e os docs de `web/docs/` a cada avanço.
 
-### `infra/` — Infraestrutura (Pulumi) ✅ Fase 6 + 7 concluídas (deploy funcional)
+### `infra/` — Infraestrutura (Pulumi) ✅ Fase 6 + 7 concluídas (deploy funcional) · 🔒 hardening em andamento (domínio próprio)
 
 - Projeto Pulumi `brevly-infra` com **programa completo** em `index.ts`: VPC (2 AZs + NAT), S3 front-end + CSV, CloudFront (CDN), RDS PostgreSQL `db.t4g.micro`, ECR + ECS Fargate + ALB.
 - **Stack `brevly-prod` inicializada** (região `us-east-1`, conta `488182246611`) com config local `accountId` + `dbPassword` secreto. **A config da stack (`Pulumi.brevly-prod.yaml`) não é versionada** (`.gitignore` do infra — repo público) e foi criada com passphrase vazio (`PULUMI_CONFIG_PASSPHRASE=""`). Recriar com `pulumi config set` após clone (ver [`infra-pulumi.md`](./infra-pulumi.md)).
-- **Deploy aplicado e funcional (2026-09-28):** VPC, RDS (available), CloudFront (CDN), ECS Fargate (1 task healthy no ALB), ECR com imagem `:latest`. API validada via ALB (health, POST/GET links). Migrations aplicadas via ECS one-off task (migrator programático com `sslmode=no-verify`).
+- **Deploy aplicado e funcional (2026-09-28):** VPC, RDS (available), CloudFront (CDN), ECS Fargate (1 task healthy no ALB), ECR. API validada via ALB.
+- **Hardening (2026-09-28, Fase de segurança):** domínio próprio `brev-ly.burndev.app` + `api.brev-ly.burndev.app`; buckets S3 **privados via OAC** (policies públicas removidas); `DATABASE_URL` via **Secrets Manager** (ADR-011); redeploy via tag `sha`; ALB recriado (novo DNS); ECR `scanOnPush`; **role OIDC dedicada** `GitHubActionsOIDCRoleBrevly` (isola do upload-widget — ADR-010/011). Infra aplicada com `enableTls=false` (cert ACM `PENDING_VALIDATION`).
 - **Backend de estado:** `s3://brevly-pulumi-state` (**bucket exclusivo do Brev.ly**, versionado — substitui o `burn-pulumi-state` do ADR-006, inacessível desta conta; **ADR-009**).
-- **CI/CD ativo (Fase 7):** workflows `pr.yml` (lint/typecheck/test/preview) e `deploy.yml` (infra → ECR → redeploy → migrate → web) **verdes** em `main`. OIDC via `GitHubActionsOIDCRole` (trust `burn-c/brev.ly`), secrets `AWS_OIDC_ROLE_ARN` + `DB_PASSWORD`.
+- **CI/CD ativo (Fase 7):** workflows `pr.yml` (lint/typecheck/test/preview) e `deploy.yml` (infra → ECR → redeploy → migrate → web) **verdes** em `main`. OIDC via `GitHubActionsOIDCRoleBrevly` (dedicada), secrets `AWS_OIDC_ROLE_ARN` + `DB_PASSWORD`.
 - Versões pinadas `@pulumi/aws@7.35.0` + `@pulumi/awsx@3.6.0` (compatíveis com os plugins já instalados localmente).
-- Ver [`infra-pulumi.md`](./infra-pulumi.md) e [`deploy.md`](./deploy.md).
+- Ver [`infra-pulumi.md`](./infra-pulumi.md), [`deploy.md`](./deploy.md) e [`squarespace-dns.md`](./squarespace-dns.md).
 
 ## Acesso ao Figma
 
@@ -80,6 +81,10 @@
 - **Ambiente (Docker):** MinIO e LocalStack bloqueados no registro; `s3mock` v3 incompatível (parse XML) e v2 não persiste uploads do SDK v3. **Validação de rede S3/R2 fica para o deploy (F6/7).** O mesmo SDK é comprovado contra R2 no projeto de referência.
 - **Storage lazy:** `createStorageProvider` valida na hora do upload (não quebra o `buildApp` sem config).
 - **CORS:** origin = `FRONTEND_URL` (default `http://localhost:5173`).
+- **Segurança do deploy (2026-09-28):** buckets S3 **privados** com OAC do CloudFront (nunca reativar policy pública); senha RDS via **Secrets Manager** (não em env da task def); redeploy via tag `sha` (config `brevly-infra:imageTag`); role OIDC **dedicada** `GitHubActionsOIDCRoleBrevly` (isolada do upload-widget); `cloudfront:*` fica em `*` por limitação da AWS. Ver ADRs 010/011.
+- **OAC + bucket policies:** o CloudFront com OAC exige que cada bucket tenha uma `BucketPolicy` autorizando o principal `cloudfront.amazonaws.com` com `AWS:SourceArn` da distribuição — sem isso o CDN retorna 403.
+- **CloudFront cache:** `forwardedValues` e `cachePolicyId` são mutuamente exclusivos (erro de schema se ambos); usar `Managed-CachingOptimized` (`658327ea-f89d-4fab-a63d-7e88639e58f6`).
+- **ALB awsx vs nativo:** o `awsx.lb.ApplicationLoadBalancer` cria um listener filho com nome interno (`brevly-alb-0`); ao trocar para listeners nativos é preciso remover o listener antigo do estado (o preview detecta como `delete`). Prefere `aws.lb.*` para controle total.
 - **Pulumi — namespace de config:** é o **nome do projeto** (`brevly-infra:accountId`), não um nome livre (`brevly:accountId` gera erro "Missing required configuration variable").
 - **Pulumi — versões de plugin:** o CLI usa a versão do SDK que o programa importa; se houver resíduo de versões antigas no store pnpm (`node_modules/.pnpm/@pulumi+aws@*`), ele tenta baixar o plugin correspondente e trava em rede lenta. Fixar `@pulumi/aws`/`@pulumi/awsx` via `overrides` no `pnpm-workspace.yaml` + `rm -rf node_modules && pnpm install` resolve. Plugins já instalados ficam em `~/.pulumi/plugins`.
 - **Pulumi — login/região:** o bucket de estado `brevly-pulumi-state` está em `us-east-1`; rodar `AWS_REGION=us-east-1` junto com `pulumi` (o `~/.aws/config` usa `us-east-2`, causando `PermanentRedirect`).
@@ -103,8 +108,8 @@
 
 ## Próximos passos
 
-1. **Fase 7 — CI/CD (ativar):** criar a role OIDC `GitHubActionsOIDCRole` (trust para `burn-c/brev.ly`) e os secrets `AWS_OIDC_ROLE_ARN` + `DB_PASSWORD`; validar os pipelines em um PR real. Ver [`ci-cd.md`](./ci-cd.md).
-2. **Aplicar a infra** (`pulumi up`) quando for fazer o deploy real: emitir o certificado ACM (validação DNS), push da imagem ECR, migrations no RDS e sync do front no S3. Ver [`deploy.md`](./deploy.md).
+1. **Hardening — DNS manual (você):** adicionar os 4 CNAMEs no painel da Squarespace (`docs/squarespace-dns.md`) e aguardar o cert ACM `ISSUED`.
+2. **Hardening — ativar TLS (F4):** após `ISSUED`, `pulumi config set brevly-infra:enableTls true` + `pulumi up` (ou `BREVLY_ENABLE_TLS=true` no GitHub) → CloudFront alias + ALB 443 + redirect. Depois validar end-to-end (F5).
 3. Fase 4 — Front-end (finalização): revisão visual contra o `design-spec.md` (Desktop 1366×720 e Mobile 390px) e testes manuais dos fluxos.
 4. Fase 8 — Testes e2e/aceite.
 5. Fase 9 — Entrega (repo público, push, submissão FTR).
