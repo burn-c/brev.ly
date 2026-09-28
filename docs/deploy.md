@@ -2,7 +2,7 @@
 
 Guia do deploy da aplicação na AWS (Pulumi). Stack `brevly-prod`.
 
-> **Status:** a infraestrutura está definida (Fase 6) com `pulumi preview` validado (50 recursos). O deploy automatizado (CI/CD) será implementado na Fase 7.
+> **Status:** ✅ deploy aplicado e funcional (2026-09-28). O CI/CD (Fase 7) automatiza o deploy em `main` via GitHub Actions + OIDC.
 
 ## Arquitetura
 
@@ -39,10 +39,16 @@ docker push $ECR_REPO_URL:latest
 
 ### 2. Aplicar migrations
 
+O RDS é **privado** (sem acesso externo), então as migrations rodam **via ECS one-off task** (dentro da VPC). O job `migrate` do `deploy.yml` executa o migrator programático do drizzle com `sslmode=no-verify` (RDS usa certificado auto-assinado). Referência manual:
+
 ```bash
-# aponta para o endpoint do RDS (output databaseEndpoint)
-DATABASE_URL=postgres://postgres:$DB_PASSWORD@$DB_ENDPOINT/brevly pnpm db:migrate
+aws ecs run-task --cluster brevly-cluster --launch-type FARGATE \
+  --task-definition <TASK_DEF> \
+  --network-configuration "awsvpcConfiguration={subnets=[$PRIVATE_SUBNETS]}" \
+  --overrides '{"containerOverrides":[{"name":"brevly-server","command":["node","-e","...migrate..."],"environment":[{"name":"DATABASE_URL","value":"postgres://postgres:$DB_PASSWORD@$DB_ENDPOINT/brevly?sslmode=no-verify"}]}]}'
 ```
+
+> O `DATABASE_URL` no ECS usa `?sslmode=no-verify` (RDS com cert auto-assinado; `require` falha com "self-signed certificate in certificate chain").
 
 ### 3. Subir o front-end
 
@@ -59,7 +65,14 @@ Definidas no `infra/index.ts`: `DATABASE_URL`, `FRONTEND_URL=https://cdn.brevly.
 
 ## Certificado TLS
 
-O ACM Certificate (`cdn.brevly.com.br`) usa validação DNS — antes do `pulumi up` final, criar o registro CNAME (exposto no output do Certificate) no DNS e aguardar a emissão.
+> **Nota atual:** o CloudFront usa o **certificado default** (`cloudfrontDefaultCertificate: true`) — o domínio `cdn.brevly.com.br` ainda não tem DNS/TLS configurado. Para usar TLS custom no futuro: criar o ACM Certificate, validar via DNS (CNAME) e trocar `viewerCertificate` no `infra/index.ts`.
+
+## Estado do deploy (2026-09-28)
+
+- **API (ALB):** `http://brevly-alb-254f025-408442978.us-east-1.elb.amazonaws.com` — health/CRUD validados.
+- **Front (CloudFront):** URL `https://d3nkc5rftpck20.cloudfront.net` (certificado default).
+- **Banco:** RDS `brevly-db62b3c22` (available), migrations aplicadas via ECS task.
+- **Deploy automatizado:** push em `main` → `pulumi up` → ECR → redeploy → migrate (ECS) → sync web + invalidação CloudFront.
 
 ## Custos estimados
 

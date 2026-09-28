@@ -2,6 +2,25 @@
 
 Todas as mudanças notáveis do projeto serão documentadas neste arquivo, seguindo o estilo [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [0.7.1] - 2026-09-28
+
+### Adicionado
+
+- **Deploy real aplicado e funcional na AWS** (Fase 6+7 concluídas): VPC, RDS PostgreSQL, CloudFront, ECS Fargate + ALB, ECR — API validada em produção (health + CRUD de links). Migrations aplicadas via **ECS one-off task** (migrator programático com `sslmode=no-verify`, pois o RDS usa certificado auto-assinado e o runner do CI não alcança o RDS privado).
+- **Pipelines verdes** em `main`: `pr.yml` (lint/typecheck/test/preview) e `deploy.yml` (infra → ECR → redeploy → migrate → web).
+
+### Corrigido
+
+- **OIDC trust**: o `sub` do GitHub para PRs usa o formato `repo:burn-c@<owner-id>/<repo>@<repo-id>:pull_request` — adicionado padrão `repo:burn-c@*:*` ao trust da `GitHubActionsOIDCRole`.
+- **Thumbprint OIDC**: adicionados o certificado de assinatura de tokens (`actions.self-signed.github`) e a cadeia TLS ao provider.
+- **S3**: `s3:GetBucketTagging/ACL/CORS/ObjectLock` + `s3:*` nos buckets `brevly-*` (o provider faz drift-check).
+- **IAM**: `iam:ListRolePolicies`/`CreateServiceLinkedRole` para o Pulumi gerenciar roles do ECS/RDS.
+- **ECS execution role**: inline policy `logs:CreateLogGroup` (a managed AWS policy não inclui).
+- **CloudFront**: origin com domain name interpolado (o `bucketRegionalDomainName` não resolvia) e health check do target group em `/health`.
+- **RDS**: `backupRetentionPeriod: 0` (limite free tier) e `DATABASE_URL` com `sslmode=no-verify`.
+- **Migrate**: usa o migrator programático do drizzle (o CLI engolia o erro); `drizzle/meta` incluído na imagem (antes excluído pelo `.dockerignore`).
+- **deploy.yml**: `pulumi login` antes de `stack output`; ordem corrigida (infra → ECR → redeploy → migrate/web).
+
 ## [0.7.0] - 2026-09-27
 
 ### Adicionado

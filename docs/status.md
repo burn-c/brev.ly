@@ -19,8 +19,8 @@
 - [x] Fase 3 — CSV/CDN (storage S3/R2, exportação CSV)
 - [~] Fase 4 — Front-end (páginas `/`, `/:url-encurtada`, `*`; fluxos; UX; responsividade) — implementado, falta revisão visual final
 - [x] Fase 5 — Docker (Dockerfile multi-stage + docker-compose local)
-- [x] Fase 6 — Infra (Pulumi: VPC/ECS/RDS/S3/CloudFront, stack `brevly-prod` — `preview` validado, 50 recursos)
-- [~] Fase 7 — CI/CD (GitHub Actions + OIDC) — workflows criados, falta criar repo público + role OIDC + secrets
+- [x] Fase 6 — Infra (Pulumi: VPC/ECS/RDS/S3/CloudFront, stack `brevly-prod` — **deploy aplicado e funcional**)
+- [x] Fase 7 — CI/CD (GitHub Actions + OIDC — **pipelines verdes, deploy automático em main**)
 - [ ] Fase 8 — Testes (suíte completa)
 - [ ] Fase 9 — Entrega (checklist 26 itens, README, submissão)
 
@@ -46,12 +46,13 @@
 - **Fase 4 em andamento (2026-09-27):** páginas implementadas — `/` (HomePage: formulário RHF+Zod, listagem TanStack Query, delete, CSV, empty/loading/skeleton, copy), `/:url-encurtada` (RedirectPage: GET → PATCH access → `window.location`, fallback "Acesse aqui", 404 → NotFoundPage), `*` (NotFoundPage com 404.svg). Componentes: `Button` (primary/secondary), `IconButton`, `Input` (default/active/error + Warning), `Logo`/`LogoIcon`, `Toast` (Provider + `useToast`). Cliente API em `src/lib/api.ts`. Verificação (lint/typecheck/build) verde.
 - **Regra:** agentes de layout devem atualizar esta seção e os docs de `web/docs/` a cada avanço.
 
-### `infra/` — Infraestrutura (Pulumi) ✅ Fase 6 concluída (preview validado)
+### `infra/` — Infraestrutura (Pulumi) ✅ Fase 6 + 7 concluídas (deploy funcional)
 
-- Projeto Pulumi `brevly-infra` com **programa completo** em `index.ts`: VPC (2 AZs + NAT), S3 front-end + CSV, CloudFront (CDN), ACM, RDS PostgreSQL `db.t4g.micro`, ECR + ECS Fargate + ALB.
+- Projeto Pulumi `brevly-infra` com **programa completo** em `index.ts`: VPC (2 AZs + NAT), S3 front-end + CSV, CloudFront (CDN), RDS PostgreSQL `db.t4g.micro`, ECR + ECS Fargate + ALB.
 - **Stack `brevly-prod` inicializada** (região `us-east-1`, conta `488182246611`) com config local `accountId` + `dbPassword` secreto. **A config da stack (`Pulumi.brevly-prod.yaml`) não é versionada** (`.gitignore` do infra — repo público) e foi criada com passphrase vazio (`PULUMI_CONFIG_PASSPHRASE=""`). Recriar com `pulumi config set` após clone (ver [`infra-pulumi.md`](./infra-pulumi.md)).
+- **Deploy aplicado e funcional (2026-09-28):** VPC, RDS (available), CloudFront (CDN), ECS Fargate (1 task healthy no ALB), ECR com imagem `:latest`. API validada via ALB (health, POST/GET links). Migrations aplicadas via ECS one-off task (migrator programático com `sslmode=no-verify`).
 - **Backend de estado:** `s3://brevly-pulumi-state` (**bucket exclusivo do Brev.ly**, versionado — substitui o `burn-pulumi-state` do ADR-006, inacessível desta conta; **ADR-009**).
-- **`pulumi preview` validado**: 50 recursos a criar, **zero erros/warnings**. Logs de `up` pendentes de aplicar (só aplicar quando for fazer o deploy real, Fase 7).
+- **CI/CD ativo (Fase 7):** workflows `pr.yml` (lint/typecheck/test/preview) e `deploy.yml` (infra → ECR → redeploy → migrate → web) **verdes** em `main`. OIDC via `GitHubActionsOIDCRole` (trust `burn-c/brev.ly`), secrets `AWS_OIDC_ROLE_ARN` + `DB_PASSWORD`.
 - Versões pinadas `@pulumi/aws@7.35.0` + `@pulumi/awsx@3.6.0` (compatíveis com os plugins já instalados localmente).
 - Ver [`infra-pulumi.md`](./infra-pulumi.md) e [`deploy.md`](./deploy.md).
 
