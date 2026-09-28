@@ -193,6 +193,10 @@ jobs:
         working-directory: infra
         run: pnpm install --frozen-lockfile
 
+      - name: Test
+        working-directory: web
+        run: pnpm test
+
       - name: Build
         working-directory: web
         env:

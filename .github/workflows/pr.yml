@@ -52,7 +52,7 @@ jobs:
         run: pnpm build
 
   web:
-    name: Web (lint, format, typecheck, build)
+    name: Web (lint, format, typecheck, test, build)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -85,6 +85,10 @@ jobs:
       - name: Typecheck
         working-directory: web
         run: pnpm typecheck
+
+      - name: Test
+        working-directory: web
+        run: pnpm test
 
       - name: Build
         working-directory: web
