@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Copy, Download, Link, Trash2 } from "lucide-react"
+import { Copy, Download, Link, Loader2, Trash2 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -46,22 +46,14 @@ const createLinkSchema = z.object({
 
 type FormValues = z.infer<typeof createLinkSchema>
 
-const SKELETON_KEYS = ["skeleton-1", "skeleton-2", "skeleton-3", "skeleton-4"]
-
-function SkeletonRows() {
+function LoadingLinks() {
   return (
-    <div className="animate-pulse" aria-hidden="true">
-      {SKELETON_KEYS.map(key => (
-        <div key={key} className="flex items-center gap-4 border-t border-gray-200 py-0.5 md:gap-5">
-          <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <div className="h-3 w-1/2 rounded bg-gray-300" />
-            <div className="h-2.5 w-2/3 rounded bg-gray-300" />
-          </div>
-          <div className="h-2.5 w-12 rounded bg-gray-300" />
-          <div className="size-8 rounded bg-gray-300" />
-          <div className="size-8 rounded bg-gray-300" />
-        </div>
-      ))}
+    <div
+      className="flex flex-col items-center gap-3 border-t border-gray-200 py-8 text-center"
+      role="status"
+    >
+      <Loader2 className="size-8 animate-spin text-gray-500" aria-hidden="true" />
+      <p className="text-xs uppercase text-gray-500">CARREGANDO LINKS...</p>
     </div>
   )
 }
@@ -99,7 +91,7 @@ function HomePage() {
   })
   const hasFormError = Boolean(errors.originalUrl || errors.shortCode)
 
-  const { data, isLoading, isError, refetch } = useQuery({
+  const { data, isLoading, isError, isFetching, refetch } = useQuery({
     queryKey: ["links"],
     queryFn: () => listLinks(1, 100),
   })
@@ -186,7 +178,7 @@ function HomePage() {
 
   return (
     <div className="flex min-h-dvh flex-col bg-gray-200 md:h-dvh md:overflow-hidden">
-      <header className="mx-auto w-full max-w-[980px] px-3 py-8 md:px-0 md:py-10">
+      <header className="mx-auto flex w-full max-w-[980px] justify-center px-3 py-8 md:justify-start md:px-0 md:py-10">
         <Logo className="h-6 w-auto" />
       </header>
 
@@ -230,7 +222,7 @@ function HomePage() {
 
           <section
             ref={myLinksRef}
-            className="flex max-h-[340px] min-h-0 flex-col rounded-lg bg-gray-100 p-6 md:min-h-[340px] md:max-h-[680px] md:flex-1 md:self-stretch md:p-8"
+            className="flex max-h-[340px] min-h-0 flex-col rounded-lg bg-gray-100 p-6 md:min-h-[340px] md:max-h-[680px] md:flex-1 md:p-8"
           >
             <div className="flex shrink-0 items-center justify-between">
               <h2 className="text-lg font-bold text-gray-600">Meus links</h2>
@@ -238,16 +230,26 @@ function HomePage() {
                 variant="secondary"
                 size="sm"
                 onClick={handleDownloadCsv}
-                disabled={isDownloading}
+                disabled={isDownloading || links.length === 0}
               >
                 <Download size={16} aria-hidden="true" />
                 Baixar CSV
               </Button>
             </div>
 
-            <div className="mt-5 min-h-0 flex-1 overflow-y-auto">
+            <div className="scrollbar-thin relative mt-5 min-h-0 flex-1 overflow-y-auto">
+              {isFetching && !isLoading ? (
+                <div
+                  className="absolute inset-x-0 top-0 h-1 overflow-hidden bg-gray-200"
+                  role="progressbar"
+                  aria-label="Atualizando links"
+                >
+                  <div className="h-full w-1/3 animate-progress bg-blue-base" />
+                </div>
+              ) : null}
+
               {isLoading ? (
-                <SkeletonRows />
+                <LoadingLinks />
               ) : isError ? (
                 <div className="flex flex-col items-center gap-3 border-t border-gray-200 py-10 text-center">
                   <p className="text-xs uppercase text-gray-500">
@@ -258,7 +260,7 @@ function HomePage() {
                   </Button>
                 </div>
               ) : links.length === 0 ? (
-                <div className="flex flex-col items-center gap-3 border-t border-gray-200 py-4 pb-6 text-center">
+                <div className="flex flex-col items-center gap-3 border-t border-gray-200 py-8 text-center">
                   <Link size={32} className="text-gray-500" aria-hidden="true" />
                   <p className="text-xs uppercase text-gray-500">
                     ainda não existem links cadastrados
@@ -269,7 +271,7 @@ function HomePage() {
                   {links.map(link => (
                     <li
                       key={link.id}
-                      className="flex items-center gap-4 border-t border-gray-200 py-0.5 md:gap-5"
+                      className="flex items-center gap-4 border-t border-gray-200 py-5 md:gap-5"
                     >
                       <div className="flex min-w-0 flex-1 flex-col gap-1">
                         <span className="block truncate text-sm font-semibold text-blue-base">

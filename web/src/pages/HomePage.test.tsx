@@ -57,11 +57,12 @@ describe("HomePage", () => {
     })
   })
 
-  it("shows the skeleton while the list is loading", () => {
+  it("shows the loading state while the list is loading", () => {
     vi.mocked(listLinks).mockReturnValue(new Promise(() => {}))
     renderHomePage()
 
-    expect(document.querySelector(".animate-pulse")).toBeInTheDocument()
+    expect(screen.getByText("CARREGANDO LINKS...")).toBeInTheDocument()
+    expect(screen.getByRole("status")).toBeInTheDocument()
   })
 
   it("renders the list of links with short code, URL and counter", async () => {
@@ -172,8 +173,8 @@ describe("HomePage", () => {
     const user = userEvent.setup()
     const openSpy = vi.spyOn(window, "open").mockImplementation(() => null)
     vi.mocked(listLinks).mockResolvedValue({
-      data: [],
-      meta: { page: 1, pageSize: 100, total: 0, totalPages: 0 },
+      data: [link],
+      meta: { page: 1, pageSize: 100, total: 1, totalPages: 1 },
     })
     vi.mocked(getCsvUrl).mockResolvedValue({
       url: "https://brev-ly.burndev.app/csv/report.csv",
@@ -190,11 +191,22 @@ describe("HomePage", () => {
     )
   })
 
-  it("shows a toast when the CSV download fails", async () => {
-    const user = userEvent.setup()
+  it("disables the CSV button when there are no links", async () => {
     vi.mocked(listLinks).mockResolvedValue({
       data: [],
       meta: { page: 1, pageSize: 100, total: 0, totalPages: 0 },
+    })
+    renderHomePage()
+
+    await screen.findByText("ainda não existem links cadastrados")
+    expect(screen.getByRole("button", { name: /baixar csv/i })).toBeDisabled()
+  })
+
+  it("shows a toast when the CSV download fails", async () => {
+    const user = userEvent.setup()
+    vi.mocked(listLinks).mockResolvedValue({
+      data: [link],
+      meta: { page: 1, pageSize: 100, total: 1, totalPages: 1 },
     })
     vi.mocked(getCsvUrl).mockRejectedValue(new ApiError("Erro interno", 500))
     renderHomePage()
@@ -289,5 +301,24 @@ describe("HomePage", () => {
 
     expect(await screen.findByText("http://localhost:5173/abc123")).toBeInTheDocument()
     expect(vi.mocked(listLinks)).toHaveBeenCalledTimes(2)
+  })
+
+  it("shows a progress bar on top of the list while refetching", async () => {
+    const user = userEvent.setup()
+    vi.mocked(listLinks)
+      .mockResolvedValueOnce({
+        data: [link],
+        meta: { page: 1, pageSize: 100, total: 1, totalPages: 1 },
+      })
+      .mockReturnValueOnce(new Promise(() => {}))
+    vi.mocked(createLink).mockResolvedValue(link)
+    renderHomePage()
+
+    await screen.findByText("http://localhost:5173/abc123")
+
+    await user.type(screen.getByLabelText("link original"), "https://exemplo.com.br")
+    await user.click(screen.getByRole("button", { name: "Salvar link" }))
+
+    expect(screen.getByRole("progressbar")).toBeInTheDocument()
   })
 })

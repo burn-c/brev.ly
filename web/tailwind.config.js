@@ -29,6 +29,15 @@ export default {
         lg: ["1.125rem", { lineHeight: "1.5rem" }],
         xl: ["1.5rem", { lineHeight: "2rem" }],
       },
+      keyframes: {
+        progress: {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(400%)" },
+        },
+      },
+      animation: {
+        progress: "progress 1.2s ease-in-out infinite",
+      },
     },
   },
   plugins: [],
