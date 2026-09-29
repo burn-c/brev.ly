@@ -64,7 +64,9 @@ function HomePage() {
   const [isDownloading, setIsDownloading] = useState(false)
   const [linkToDelete, setLinkToDelete] = useState<LinkData | null>(null)
   const [myLinksHeight, setMyLinksHeight] = useState(0)
+  const [showProgress, setShowProgress] = useState(false)
   const myLinksRef = useRef<HTMLElement | null>(null)
+  const progressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     const node = myLinksRef.current
@@ -122,6 +124,24 @@ function HomePage() {
       toast.error("Não foi possível excluir o link")
     },
   })
+
+  useEffect(() => {
+    const active = createMutation.isPending || deleteMutation.isPending || isFetching
+    if (active) {
+      if (progressTimerRef.current) {
+        clearTimeout(progressTimerRef.current)
+        progressTimerRef.current = null
+      }
+      setShowProgress(true)
+      return
+    }
+    if (showProgress && !progressTimerRef.current) {
+      progressTimerRef.current = setTimeout(() => {
+        setShowProgress(false)
+        progressTimerRef.current = null
+      }, 700)
+    }
+  }, [createMutation.isPending, deleteMutation.isPending, isFetching, showProgress])
 
   const onSubmit = (values: FormValues) => {
     const result = createLinkSchema.safeParse(values)
@@ -224,13 +244,13 @@ function HomePage() {
             ref={myLinksRef}
             className="relative flex max-h-[340px] min-h-0 flex-col overflow-hidden rounded-lg bg-gray-100 p-6 md:min-h-[340px] md:max-h-[680px] md:flex-1 md:p-8"
           >
-            {isFetching && !isLoading ? (
+            {showProgress && !isLoading ? (
               <div
-                className="absolute inset-x-0 top-0 z-10 h-1 overflow-hidden bg-gray-200"
+                className="pointer-events-none absolute inset-x-0 top-0 z-10 h-1 overflow-hidden"
                 role="progressbar"
                 aria-label="Atualizando links"
               >
-                <div className="h-full w-1/3 animate-progress rounded-full bg-blue-base" />
+                <div className="h-full w-2/5 animate-progress bg-blue-base" />
               </div>
             ) : null}
 
