@@ -38,6 +38,8 @@ Documentação do modelo de dados e migrations do Brev.ly. Banco: **PostgreSQL**
 
 ```bash
 # 1. Suba um Postgres (ex.: Docker)
+docker compose up -d db   # server/docker-compose.yaml (container brevly-db, porta 5432)
+# ou avulso:
 docker run -d --name brevly-db -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres \
   -e POSTGRES_DB=brevly -p 5432:5432 postgres:15-alpine
 
@@ -52,4 +54,4 @@ pnpm db:migrate
 pnpm dev
 ```
 
-> O `docker-compose.yaml` com Postgres + app será adicionado na Fase 5.
+> O `docker-compose.yaml` (`server/`) tem o Postgres (`db`) e a imagem da API (`app`). Para desenvolvimento local, sobe-se apenas o `db` e roda-se a API/web no host (`pnpm dev`).

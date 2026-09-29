@@ -33,9 +33,55 @@ brev.ly/
 
 ## Quickstart
 
-Pré-requisitos: Node.js 20+ · pnpm 9+ · (infra) Pulumi CLI + credenciais AWS.
+Pré-requisitos: Node.js 22+ · pnpm 11 · Docker (para o Postgres) · Cloudflare CLI (`wrangler`) para o CSV via R2.
 
-### Back-end
+### Rodar a aplicação inteira localmente
+
+Passo a passo completo (banco + API + web + exportação CSV via R2):
+
+```bash
+# 1. Banco de dados (Postgres via Docker)
+cd server
+docker compose up -d db          # sobe o Postgres na porta 5432
+pnpm db:migrate                  # aplica as migrations (drizzle-kit roda no host)
+
+# 2. Configurar o .env do server (ver seção "Variáveis de ambiente" abaixo)
+cp .env.example .env
+#    → preencha DATABASE_URL, FRONTEND_URL e o storage (R2 ou S3)
+
+# 3. API
+pnpm dev                         # http://localhost:3333  (teste: /health)
+
+# 4. Web
+cd ../web
+cp .env.example .env             # ajuste VITE_BACKEND_URL=http://localhost:3333
+pnpm dev                         # http://localhost:5173
+```
+
+A aplicação estará em **http://localhost:5173**, com a API em **http://localhost:3333**.
+
+#### Exportação de CSV localmente (Cloudflare R2)
+
+O botão "Baixar CSV" do front abre a URL pública do arquivo. Para o CSV funcionar local, o storage precisa de credenciais R2 (ou S3) reais no `server/.env`:
+
+```env
+STORAGE_PROVIDER=cloudflare
+CLOUDFLARE_ACCOUNT_ID=<account-id>
+CLOUDFLARE_ACCESS_KEY_ID=<access-key-id>
+CLOUDFLARE_SECRET_ACCESS_KEY=<secret-access-key>
+CLOUDFLARE_BUCKET=<bucket>
+CLOUDFLARE_PUBLIC_URL=<r2.dev-url-ou-domínio>
+```
+
+**Onde obter cada valor (Cloudflare):**
+1. **Account ID** — dash.cloudflare.com → R2 → Overview (painel da conta).
+2. **Access Key ID + Secret Access Key** — R2 → **Manage R2 API Tokens** → **Create API Token** → permissão **Object Read & Write** (aplicado ao bucket). O dashboard exibe o par S3 (Access Key ID 32 chars + Secret 64 hex).
+3. **Bucket** — criar via CLI: `wrangler r2 bucket create <nome>` (ou no dashboard).
+4. **URL pública** — habilitar via CLI: `wrangler r2 bucket dev-url enable <bucket>` → retorna `https://pub-<hash>.r2.dev` (usado como `CLOUDFLARE_PUBLIC_URL`). Requer `wrangler login` e bucket com acesso público.
+
+> **Importante:** o endpoint S3 do R2 é `https://<ACCOUNT_ID>.r2.cloudflarestorage.com` (o provider `cloudflare` monta automaticamente a partir do `accountId`). O fluxo local é idêntico ao de produção: o server faz upload do CSV para o bucket e o browser abre a URL pública.
+
+### Back-end (apenas API)
 
 ```bash
 cd server

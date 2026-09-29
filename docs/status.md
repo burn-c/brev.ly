@@ -34,7 +34,7 @@
 - **Testes:** 77 passando (Vitest). Scripts: `typecheck`, `lint`, `format:check`, `test`, `build`, `db:migrate`, `db:generate`.
 - **Ids:** uuid v7 via `uuidv7` (ADR-001).
 - **Docker ✅ (Fase 5):** `Dockerfile` multi-stage (base/dependencies/build/production_deployment) + `docker-compose.yaml` (db postgres:15-alpine + app), validados de ponta a ponta (health, create/list/access dentro dos containers). Ver [`docker.md`](./docker.md).
-- **Pendências:** nenhuma (storage em produção validado no deploy F6/7 — exportação CSV via S3 + CloudFront).
+- **Pendências:** nenhuma (storage validado local e em produção — exportação CSV via R2 no dev e S3 + CloudFront no deploy). **Rodar local com CSV:** preencher `CLOUDFLARE_*` no `server/.env` (credenciais R2 + URL pública r2.dev) — passo a passo no README → Quickstart. Validado de ponta a ponta em 2026-09-29 (upload no bucket `brevly-csv-reports` + URL `https://pub-*.r2.dev/csv/<uuid>.csv` retornando o CSV com coluna `id`).
 
 ### `web/` — Front-end (React + Vite + TS + Tailwind) 🎨 design system pronto · ✅ Fase 4 + Fase 8 concluídas
 

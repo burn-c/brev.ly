@@ -16,6 +16,7 @@ build
 # Dados locais
 db-data
 *.log
+.wrangler
 
 # IDE
 .idea

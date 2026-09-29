@@ -38,18 +38,22 @@ Dois serviços:
 
 ### Uso
 
+**Só o banco (recomendado para dev):** sobe o Postgres e roda a API/web no host.
+
 ```bash
 cd server
 cp .env.example .env   # ajuste as variáveis (PORT, FRONTEND_URL, storage)
-docker compose up -d --build
+docker compose up -d db
 
 # 1. Aplique as migrations (drizzle-kit roda no host, contra a porta 5432 do compose)
 pnpm db:migrate
 
-# 2. API disponível em http://localhost:3333
+# 2. API em http://localhost:3333 (pnpm dev) + web em http://localhost:5173 (pnpm dev)
 curl http://localhost:3333/health
 ```
 
+**Subir o app no container** (imagem `brevly-server`): `docker compose up -d --build` — o `app` usa `env_file: .env` + `DATABASE_URL` apontando para o `db` do compose.
+
 Para parar e remover volumes: `docker compose down -v`.
 
-> O `app` usa `env_file: .env` (variáveis do R2/S3/Cloudflare do `.env.example`). O `STORAGE_PROVIDER` padrão é `cloudflare`; sem credenciais o CSV retorna `500` (storage lazy) — configure as chaves para testar a exportação.
+> **CSV local (Cloudflare R2):** o `STORAGE_PROVIDER` padrão é `cloudflare`; sem credenciais o CSV retorna `500` (storage lazy). Preencha as vars `CLOUDFLARE_*` no `.env` (ver README → Quickstart) para testar a exportação: o server faz upload para o bucket R2 e o browser abre a URL pública (`CLOUDFLARE_PUBLIC_URL`). R2 e S3 são S3-compatíveis — o `@aws-sdk/client-s3` é o mesmo para ambos.
