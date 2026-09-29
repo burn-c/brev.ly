@@ -38,7 +38,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       </div>
       {error ? (
         <div id={`${inputId}-error`} className="flex items-center gap-2 text-xs text-gray-500">
-          <TriangleAlert className="size-4 text-gray-500" aria-hidden="true" />
+          <TriangleAlert className="size-4 text-danger" aria-hidden="true" />
           <span>{error}</span>
         </div>
       ) : null}

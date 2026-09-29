@@ -53,7 +53,7 @@ export function ConfirmDialog({
       >
         <div className="flex items-start gap-3">
           <div className="flex size-8 shrink-0 items-center justify-center rounded bg-gray-200">
-            <TriangleAlert className="size-4 text-gray-500" aria-hidden="true" />
+            <TriangleAlert className="size-4 text-danger" aria-hidden="true" />
           </div>
           <div className="flex flex-col gap-1">
             <h2 className="text-base font-bold text-gray-600">{title}</h2>

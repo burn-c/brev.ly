@@ -23,6 +23,12 @@ describe("Input", () => {
     expect(screen.getByText("Informe a URL original")).toBeInTheDocument()
   })
 
+  it("renders the warning icon in danger color when error is provided", () => {
+    const { container } = render(<Input label="link original" error="Informe a URL original" />)
+    const icon = container.querySelector("svg")
+    expect(icon).toHaveClass("text-danger")
+  })
+
   it("marks the input as aria-invalid when error is provided", () => {
     render(<Input label="link original" error="Informe a URL original" />)
     expect(screen.getByLabelText("link original")).toHaveAttribute("aria-invalid", "true")

@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom"
 import notFoundUrl from "../../assets/404.svg"
 
 function NotFoundPage() {
@@ -8,7 +9,11 @@ function NotFoundPage() {
         <h1 className="text-xl font-bold text-gray-600">Link não encontrado</h1>
         <p className="text-sm text-gray-500">
           O link que você está tentando acessar não existe, foi removido ou é uma URL inválida.
-          Saiba mais em <span className="text-blue-base underline">brev.ly</span>.
+          Saiba mais em{" "}
+          <Link to="/" className="text-blue-base underline">
+            brev.ly
+          </Link>
+          .
         </p>
       </div>
     </main>
