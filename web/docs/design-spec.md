@@ -4,10 +4,16 @@ Especificação completa extraída do arquivo Figma oficial **"Encurtador de Lin
 (`https://www.figma.com/design/WV2Kpt6RdFhUJHV9lCfMGU/`), páginas **🎨 Style Guide** e **💻 Projeto**.
 Fonte de verdade para a implementação da UI. Tokens resumidos em [`design-tokens.md`](./design-tokens.md).
 
-> **Revisão (2026-09-27):** spec reconciliada com o canvas — corrigidos o label do input (`gray-500`),
+> **Revisão (2026-09-28):** spec reconciliada com o canvas — corrigidos o label do input (`gray-500`),
 > o texto do empty state (`gray-500`, CAIXA ALTA) e as dimensões dos botões (primary full-width,
 > secondary `hug`); adicionados botões disabled no empty state, fallback links sublinhados (`blue-base`),
 > gaps da listagem mobile, inputs preenchidos no desktop e a cor base `#000000` dos ícones Phosphor.
+>
+> **Revisão (2026-09-29):** ícone de erro do input e do dialog com cor `danger`; botão "Baixar CSV"
+> desabilitado quando não há links; logo do header centralizada no mobile; barra de scroll fina/custom
+> na listagem; primeiro carregamento da lista com loader cinza + "CARREGANDO LINKS..." (no lugar do
+> skeleton); barra de progresso 4px (`blue-base`, indeterminada) no topo da seção "Meus links" durante
+> refetch; página 404 com o "brev.ly" como link para a home.
 
 ---
 
