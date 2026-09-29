@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Copy, Download, Link, Trash2 } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { Button } from "../components/Button"
@@ -71,6 +71,22 @@ function HomePage() {
   const toast = useToast()
   const [isDownloading, setIsDownloading] = useState(false)
   const [linkToDelete, setLinkToDelete] = useState<LinkData | null>(null)
+  const [myLinksHeight, setMyLinksHeight] = useState(0)
+  const myLinksRef = useRef<HTMLElement | null>(null)
+
+  useEffect(() => {
+    const node = myLinksRef.current
+    if (!node) {
+      return
+    }
+    const observer = new ResizeObserver(entries => {
+      setMyLinksHeight(entries[0].contentRect.height)
+    })
+    observer.observe(node)
+    return () => {
+      observer.disconnect()
+    }
+  }, [])
 
   const {
     register,
@@ -174,7 +190,11 @@ function HomePage() {
         <Logo className="h-6 w-auto" />
       </header>
 
-      <main className="mx-auto flex w-full max-w-[980px] flex-1 flex-col px-3 pb-10 md:min-h-0 md:overflow-hidden md:px-0">
+      <main
+        className={`mx-auto flex w-full max-w-[980px] flex-1 flex-col px-3 pb-10 md:min-h-0 md:overflow-hidden md:px-0 ${
+          myLinksHeight >= 340 ? "md:pb-0" : "md:pb-10"
+        }`}
+      >
         <div className="flex flex-1 flex-col gap-5 md:min-h-0 md:flex-row md:items-start">
           <section
             className={`rounded-lg bg-gray-100 p-6 md:w-[380px] md:shrink-0 md:p-8 ${
@@ -208,7 +228,10 @@ function HomePage() {
             </form>
           </section>
 
-          <section className="flex max-h-[340px] min-h-0 flex-col rounded-lg bg-gray-100 p-6 md:max-h-[680px] md:flex-1 md:self-stretch md:p-8">
+          <section
+            ref={myLinksRef}
+            className="flex max-h-[340px] min-h-0 flex-col rounded-lg bg-gray-100 p-6 md:min-h-[340px] md:max-h-[680px] md:flex-1 md:self-stretch md:p-8"
+          >
             <div className="flex shrink-0 items-center justify-between">
               <h2 className="text-lg font-bold text-gray-600">Meus links</h2>
               <Button
