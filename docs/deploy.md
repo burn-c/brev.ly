@@ -83,7 +83,7 @@ Definidas no `infra/index.ts`: `DATABASE_URL`, `FRONTEND_URL=https://cdn.brevly.
 | S3 + CloudFront + ECR | < 1 |
 | **Total** | **~15–20** |
 
-> Sem uso ativo: `pulumi destroy -s brevly-prod` zera os custos.
+> Sem uso ativo: use `pnpm teardown` (em `infra/`) para zerar os custos — o `pulumi destroy` cru não limpa buckets, secret em recovery window nem o log group. Ver [`teardown.md`](./teardown.md).
 
 ## Roteiro para a Fase 7 (CI/CD)
 

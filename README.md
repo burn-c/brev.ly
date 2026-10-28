@@ -110,9 +110,14 @@ cd infra
 pnpm install
 AWS_REGION=us-east-1 pulumi login s3://brevly-pulumi-state
 AWS_REGION=us-east-1 pulumi up -s brevly-prod   # aplica/atualiza a infra (deploy real)
+
+pnpm teardown --dry-run   # revisa o que será destruído
+pnpm teardown              # derruba a infra e faz o sweep de órfãos
 ```
 
 > A config da stack (`Pulumi.brevly-prod.yaml`) **não é versionada** (repo público) e se recria localmente com `pulumi config set brevly-infra:accountId <id>` e `pulumi config set --secret brevly-infra:dbPassword <senha>`. Ver [`docs/infra-pulumi.md`](./docs/infra-pulumi.md).
+>
+> **Teardown:** o `pulumi destroy` cru não basta (buckets com objetos, secret em recovery window, log group órfão). Use [`docs/teardown.md`](./docs/teardown.md) — inclui custos, modo "pause", o que é preservado e como recriar depois.
 
 ## Status
 

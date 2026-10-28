@@ -32,6 +32,7 @@ const cert = new aws.acm.Certificate("brevly-acm-cert", {
 
 const frontendBucket = new aws.s3.Bucket("brevly-frontend", {
   bucket: "brevly-frontend-web",
+  forceDestroy: true,
   tags: { ...commonTags, name: "brevly-frontend-web" },
 })
 
@@ -48,6 +49,7 @@ const frontendPublicAccessBlock = new aws.s3.BucketPublicAccessBlock(
 
 const csvBucket = new aws.s3.Bucket("brevly-csv", {
   bucket: "brevly-csv-reports",
+  forceDestroy: true,
   tags: { ...commonTags, name: "brevly-csv-reports" },
 })
 
@@ -197,6 +199,7 @@ const database = new aws.rds.Instance("brevly-db", {
   password: config.requireSecret("dbPassword"),
   dbSubnetGroupName: dbSubnetGroup.name,
   skipFinalSnapshot: true,
+  deletionProtection: false,
   backupRetentionPeriod: 0,
   storageEncrypted: true,
   publiclyAccessible: false,
@@ -205,6 +208,9 @@ const database = new aws.rds.Instance("brevly-db", {
 
 const dbUrlSecret = new aws.secretsmanager.Secret("brevly-db-url", {
   name: "brevly/DATABASE_URL",
+  // 0 = delete imediato (sem recovery window) para o teardown não deixar
+  // o secret por 7 dias ocupando o nome e gerando custo.
+  recoveryWindowInDays: 0,
 })
 
 const dbUrlSecretVersion = new aws.secretsmanager.SecretVersion("brevly-db-url-version", {

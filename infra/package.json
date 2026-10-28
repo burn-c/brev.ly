@@ -6,6 +6,7 @@
         "up": "pulumi up -s brevly-prod",
         "refresh": "pulumi refresh -s brevly-prod",
         "destroy": "pulumi destroy -s brevly-prod",
+        "teardown": "bash scripts/teardown.sh",
         "typecheck": "tsc --noEmit"
     },
     "devDependencies": {

@@ -2,7 +2,7 @@
 
 > **Leia antes de implementar.** Este documento é a memória operacional do Brev.ly: estado atual de cada subprojeto, armadilhas descobertas e próximos passos. Deve ser atualizado no ciclo por tarefa (ver [`workflow.md`](./workflow.md)). Mantenha em PT-BR.
 >
-> Atualizado: 2026-09-28
+> Atualizado: 2026-10-28
 
 ## Mapa rápido
 
@@ -57,8 +57,9 @@
 - **Hardening (2026-09-28, Fase de segurança):** domínio próprio `brev-ly.burndev.app` + `api.brev-ly.burndev.app`; buckets S3 **privados via OAC** (policies públicas removidas); `DATABASE_URL` via **Secrets Manager** (ADR-011); redeploy via tag `sha`; ALB recriado (novo DNS); ECR `scanOnPush`; **role OIDC dedicada** `GitHubActionsOIDCRoleBrevly` (isola do upload-widget — ADR-010/011). Infra aplicada com `enableTls=false` (cert ACM `PENDING_VALIDATION`).
 - **Backend de estado:** `s3://brevly-pulumi-state` (**bucket exclusivo do Brev.ly**, versionado — substitui o `burn-pulumi-state` do ADR-006, inacessível desta conta; **ADR-009**).
 - **CI/CD ativo e validado (Fase 7 concluída):** workflows `pr.yml` (lint/typecheck/test/preview) e `deploy.yml` (ECR → pulumi up → redeploy → migrate → web) **verdes**. OIDC via role **dedicada** `GitHubActionsOIDCRoleBrevly` (isola do upload-widget — ADR-012), secrets `AWS_OIDC_ROLE_ARN` + `DB_PASSWORD`, variable `BREVLY_ENABLE_TLS=true`. Deploy 100% verde validado: build ✓, pulumi up ✓, migrate (ECS task) ✓, web ✓. PR check verde (3 jobs).
+- **Teardown automatizado (2026-10-28):** `infra/scripts/teardown.sh` + `pnpm teardown` — guarda de conta/região, preview, drenagem do ECS, esvaziamento dos buckets, `pulumi destroy` com retries, limpeza de log group/secret fora do state e sweep de órfãos. Hardening no `index.ts`: `forceDestroy` nos buckets, secret com `recoveryWindowInDays: 0` e `deletionProtection: false`. Runbook em [`teardown.md`](./teardown.md) (ADR-014).
 - Versões pinadas `@pulumi/aws@7.35.0` + `@pulumi/awsx@3.6.0` (compatíveis com os plugins já instalados localmente).
-- Ver [`infra-pulumi.md`](./infra-pulumi.md), [`deploy.md`](./deploy.md) e [`squarespace-dns.md`](./squarespace-dns.md).
+- Ver [`infra-pulumi.md`](./infra-pulumi.md), [`deploy.md`](./deploy.md), [`teardown.md`](./teardown.md) e [`squarespace-dns.md`](./squarespace-dns.md).
 
 ## Acesso ao Figma
 
@@ -94,6 +95,12 @@
 - **Pulumi — preview lento:** o `awsx.ec2.Vpc` gera ~30 recursos e o preview faz muitas chamadas AWS; pode levar 5–8 min. Não interromper — rodar em background e aguardar.
 - **Segurança pré-publicação (2026-09-27):** auditoria completa antes de criar o repo público — **nenhum segredo** em arquivos versionados nem no histórico (`.env` locais ignorados; `.env.example` só com placeholders; URLs `postgres://` nos docs são de dev local). O `Pulumi.brevly-prod.yaml` (com `dbPassword` criptografado) foi **removido do histórico via `git filter-branch`** (passphrase vazio) + `reflog expire` + `gc --prune` — os SHAs foram reescritos. Regra: **nunca commitar config de stack Pulumi nem `.env`**; a config da stack se recria com `pulumi config set`.
 - **S3 API:** `s3.BucketV2` está deprecado no `@pulumi/aws@7.35` → usar `s3.Bucket` (mesmas props).
+- **Destroy — buckets S3:** sem `forceDestroy: true`, o `pulumi destroy` falha com `BucketNotEmpty` porque o front e o CSV têm objetos. O script de teardown esvazia os dois antes; os buckets não são versionados (só o state bucket é).
+- **Destroy — Secrets Manager:** o recovery window padrão (7 dias) mantém o secret `brevly/DATABASE_URL` e reserva o nome. Usar `recoveryWindowInDays: 0`; para state antigo, `aws secretsmanager delete-secret --force-delete-without-recovery`.
+- **Destroy — log group:** `awslogs-create-group: "true"` cria `/ecs/brevly-server` **fora do state** (órfão). O script de teardown o remove após o destroy. **Não** adicione um `aws.cloudwatch.LogGroup` ao programa sem um `pulumi import` antes — o nome já existe e o `pulumi up` falharia com `ResourceAlreadyExistsException`.
+- **Destroy — programa Pulumi:** por padrão o `pulumi destroy` **não executa o programa** (usa o state), então `dbPassword`/`accountId` não são necessários para destruir; `--run-program` reativa a execução e volta a exigi-los. A config continua necessária para `pulumi up`.
+- **Destroy — CloudFront:** desabilitar + deletar leva 15–30 min; o delete é assíncrono. Não interromper; reexecutar o script é idempotente.
+- **Custo real:** a estimativa do spec (~US$ 15–20) não incluía NAT Gateway (~33) nem ALB (~16); o total fica ~US$ 70/mês. "Pausar" (ECS 0 + RDS stop) deixa ~US$ 50; só o destroy zera.
 
 ## Decisões recentes
 
@@ -108,12 +115,14 @@
 | [`decisions.md#ADR-007`](./decisions.md) | `.env` via `process.loadEnvFile` | zero dependência de `dotenv` |
 | [`decisions.md#ADR-008`](./decisions.md) | Retry esgotado → `500` | `ShortCodeGenerationError`; `409` só para custom code |
 | [`decisions.md#ADR-009`](./decisions.md) | Backend Pulumi exclusivo | `s3://brevly-pulumi-state` (substitui ADR-006) |
+| [`decisions.md#ADR-014`](./decisions.md) | Teardown automatizado | script + hardening; state bucket preservado |
 
 ## Próximos passos
 
-1. **Revisão final de entrega (Fase 9):** conferir o diff final contra o `spec.md` e o checklist de compliance (26/26 ✓ — tabela no `README.md`).
-2. **Submissão na plataforma FTR** (caso aplicável): submeter o projeto avaliativo no TD 360 (repositório público `https://github.com/burn-c/brev.ly`, branch `main`).
-3. **Acompanhamento pós-entrega:** monitorar os pipelines (`pr.yml`/`deploy.yml`) e o deploy de produção para garantir que permanecem verdes após qualquer mudança futura.
+1. **Antes do próximo deploy:** rodar `pnpm preview` para conferir o hardening (`forceDestroy`, `recoveryWindowInDays`, `deletionProtection`). O log group continua fora do state — o teardown o remove; não é necessário import.
+2. **Revisão final de entrega (Fase 9):** conferir o diff final contra o `spec.md` e o checklist de compliance (26/26 ✓ — tabela no `README.md`).
+3. **Submissão na plataforma FTR** (caso aplicável): submeter o projeto avaliativo no TD 360 (repositório público `https://github.com/burn-c/brev.ly`, branch `main`).
+4. **Acompanhamento pós-entrega:** monitorar os pipelines (`pr.yml`/`deploy.yml`) e o deploy de produção para garantir que permanecem verdes após qualquer mudança futura.
 
 ## Como atualizar este documento
 

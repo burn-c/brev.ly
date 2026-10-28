@@ -22,15 +22,19 @@ pnpm typecheck      # typecheck TypeScript (tsc --noEmit)
 pnpm preview        # pulumi preview -s brevly-prod
 pnpm up             # pulumi up -s brevly-prod
 pnpm refresh        # pulumi refresh -s brevly-prod
-pnpm destroy        # pulumi destroy -s brevly-prod
+pnpm destroy        # pulumi destroy -s brevly-prod (cru — prefira pnpm teardown)
+pnpm teardown       # teardown completo: preflight + destroy + sweep
 ```
 
 > O login usa o backend S3: `AWS_REGION=us-east-1 pulumi login s3://brevly-pulumi-state` (bucket em us-east-1).
+>
+> **Teardown:** use `pnpm teardown --dry-run` para revisar e `pnpm teardown` para destruir. O script cobre buckets não vazios, secret em recovery window e log group órfão, e faz o sweep pós-destroy. Runbook: [`docs/teardown.md`](../docs/teardown.md).
 
 ## Estrutura
 
 - `Pulumi.yaml` — metadados do projeto Pulumi
 - `Pulumi.brevly-prod.yaml` — config da stack (`accountId`, `dbPassword` secreto)
 - `index.ts` — programa Pulumi (VPC, storage, CDN, RDS, ECR, ECS+ALB)
+- `scripts/teardown.sh` — teardown idempotente com preflight, destroy e sweep
 - `package.json` / `pnpm-workspace.yaml` — dependências e pinagem de versões
 - `tsconfig.json` — opções do TypeScript (strict)

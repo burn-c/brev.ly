@@ -11,6 +11,8 @@ Infraestrutura como código (IaC) do Brev.ly com **Pulumi** (TypeScript + AWS). 
 | Banco | RDS PostgreSQL `db.t4g.micro` | Persistência |
 | CSV | S3 `brevly-csv-reports` + CloudFront | CDN para relatórios |
 | Rede | VPC `10.0.0.0/16`, 2 AZs, NAT single | Isolamento |
+| Observabilidade | CloudWatch Logs `/ecs/brevly-server` | Logs do ECS (retenção 7 dias) |
+| Segredos | Secrets Manager `brevly/DATABASE_URL` | Connection string do RDS |
 | Estado | S3 `s3://brevly-pulumi-state` | Backend de estado (exclusivo do Brev.ly) |
 
 ## Stack e backend de estado
@@ -43,10 +45,33 @@ pnpm typecheck      # tsc --noEmit
 pnpm preview        # pulumi preview -s brevly-prod
 pnpm up             # pulumi up -s brevly-prod
 pnpm refresh        # pulumi refresh -s brevly-prod
-pnpm destroy        # pulumi destroy -s brevly-prod
+pnpm destroy        # pulumi destroy -s brevly-prod (cru — prefira pnpm teardown)
+pnpm teardown       # teardown completo: preflight + destroy + sweep (ver docs/teardown.md)
 ```
 
 > O preview exige `AWS_REGION=us-east-1` (o bucket de estado está nessa região). O primeiro preview baixa os plugins do Pulumi (aws/awsx) — demora alguns minutos.
+
+## Teardown
+
+`pnpm destroy` sozinho não é suficiente no estado atual: buckets com objetos,
+secret em recovery window e log group criado pelo ECS podem falhar ou deixar
+órfãos. Use [`scripts/teardown.sh`](../infra/scripts/teardown.sh) via
+`pnpm teardown` — ele valida a conta, drena o ECS, esvazia os buckets, roda o
+destroy com retries, limpa o que estava fora do state e faz o sweep.
+Runbook completo: [`docs/teardown.md`](./teardown.md).
+
+## Hardening para destroy idempotente
+
+- `forceDestroy: true` nos buckets de front/CSV;
+- `recoveryWindowInDays: 0` no secret `brevly/DATABASE_URL`;
+- `deletionProtection: false` no RDS.
+
+Esses ajustes entram no próximo `pulumi up`; o script já cobre o estado antigo.
+
+> O log group `/ecs/brevly-server` **continua fora do state** de propósito: é
+> criado pelo ECS (`awslogs-create-group`) e o script de teardown o remove após
+> o destroy. Gerenciá-lo no Pulumi exigiria um `pulumi import` único e poderia
+> quebrar o deploy; por isso a limpeza ficou no script.
 
 ## Versões pinadas
 
@@ -61,4 +86,4 @@ pnpm destroy        # pulumi destroy -s brevly-prod
 
 ## Deploy
 
-O fluxo de deploy (push de imagem, `pulumi up`, sync do front, invalidação do CloudFront) será definido na Fase 7 (CI/CD). Ver [`deploy.md`](./deploy.md).
+O fluxo de deploy (push de imagem, `pulumi up`, sync do front, invalidação do CloudFront) é automatizado pelo CI/CD (Fase 7). Ver [`deploy.md`](./deploy.md) e [`ci-cd.md`](./ci-cd.md). Para desligar tudo e parar os custos, ver [`teardown.md`](./teardown.md).

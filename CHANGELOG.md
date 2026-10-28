@@ -2,6 +2,19 @@
 
 Todas as mudanças notáveis do projeto serão documentadas neste arquivo, seguindo o estilo [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [0.10.0] - 2026-10-28
+
+### Adicionado
+
+- **Teardown automatizado** (`infra/scripts/teardown.sh` + `pnpm teardown`): guarda de conta/região, preview do destroy, drenagem do ECS, esvaziamento dos buckets, `pulumi destroy` com retries, limpeza de log group/secret fora do state e sweep de recursos órfãos. Runbook em [`docs/teardown.md`](./docs/teardown.md) (ADR-014).
+- **Hardening do destroy** no `infra/index.ts`: `forceDestroy` nos buckets de front/CSV, `recoveryWindowInDays: 0` no secret `brevly/DATABASE_URL` e `deletionProtection: false` no RDS. O log group `/ecs/brevly-server` continua fora do state e é removido pelo script.
+- **Documentação de custos e limpeza manual**: modo "pause" (ECS 0 + RDS stop), Cloudflare R2, state bucket, DNS e CNAMEs órfãos.
+
+### Alterado
+
+- **`docs/infra-pulumi.md` / `infra/README.md`**: recursos de observabilidade/segredos, comandos de teardown e seção de hardening.
+- **`docs/status.md`**: estado do teardown, novos gotchas de destroy e ADR-014.
+
 ## [0.9.0] - 2026-09-28
 
 ### Adicionado

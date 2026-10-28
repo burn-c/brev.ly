@@ -434,3 +434,52 @@ O deploy inicial tentou usar tag `:sha` na task definition do ECS. Cada `pulumi 
 - Menos determinístico que `:sha` (a task def sempre aponta para `latest`), mas com `force-new-deployment` o resultado é idêntico em produção.
 - Para rollback: `docker build` de um commit anterior + push `latest` + force redeploy (ou apontar para a tag `sha` manualmente).
 - Documentado como limitação conhecida; `:sha` fica como melhoria futura se o provider corrigir a eventual-consistency.
+
+---
+
+## ADR-014 — Teardown automatizado e hardening para destroy idempotente
+
+- **Status:** Aceita
+- **Data:** 2026-10-28
+
+### Contexto
+
+O projeto avaliativo precisa ser desligado ao final para parar os custos. A infra
+custa ~US$ 70/mês (NAT Gateway e ALB dominam; a estimativa original do spec não
+os incluía). O `pulumi destroy` cru não termina limpo:
+
+- buckets S3 `brevly-frontend-web`/`brevly-csv-reports` com objetos → `BucketNotEmpty`;
+- secret `brevly/DATABASE_URL` com recovery window padrão de 7 dias → secret residual e nome reservado;
+- log group `/ecs/brevly-server` criado pelo ECS (`awslogs-create-group`) → órfão fora do state;
+- CloudFront leva 15–30 min e ENIs de Fargate/ALB podem atrasar o delete da VPC;
+- a config da stack (`dbPassword`) não é versionada, mas o destroy não executa o programa por padrão (usa o state).
+
+### Alternativas consideradas
+
+- **Teardown manual no console:** simples, mas não repetível, sujeito a esquecer NAT/EIP/secrets e não deixa verificação.
+- **`pulumi destroy` puro:** cobre ~90%, porém falha nos itens acima e não limpa o que está fora do state.
+- **Teardown agendado (cron):** economiza, mas arrisca destruir a infra em uso e exige permissões de delete no CI.
+- **Script + hardening (escolhido):** idempotente, com guardas, preview, retries, limpeza e sweep.
+
+### Decisão
+
+- Criar `infra/scripts/teardown.sh`, exposto como `pnpm teardown`, com:
+  - guarda de conta AWS (`488182246611`), região `us-east-1` e stack `brevly-prod`;
+  - `pulumi destroy --preview-only` + confirmação explícita;
+  - drenagem do ECS (`desiredCount=0`) e esvaziamento dos buckets;
+  - `pulumi destroy` com até 3 tentativas;
+  - limpeza pós-destroy de log group/secret que possam estar fora do state;
+  - sweep (VPC/NAT, RDS, ECS, ELB, ECR, logs, secrets, IAM, CloudFront, ACM, S3) com exit code 1 se sobrar algo.
+- Aplicar hardening no `index.ts`: `forceDestroy` nos buckets, `recoveryWindowInDays: 0` e `deletionProtection: false` no RDS.
+- **Não** gerenciar o log group `/ecs/brevly-server` no Pulumi: ele é criado pelo ECS e o script o remove no teardown. Gerenciá-lo exigiria um `pulumi import` e poderia quebrar o deploy; a limpeza ficou no script.
+- **Preservar** `s3://brevly-pulumi-state`, role OIDC, domínio/DNS e GitHub; **não** automatizar o Cloudflare R2 (fora da AWS) — documentado como limpeza manual.
+- Documentar o modo "pause" (ECS 0 + RDS stop) para intervalos curtos, deixando claro que ele **não** zera o custo.
+
+### Consequências
+
+- Teardown repetível em ~30–45 min, com verificação objetiva de órfãos.
+- O RDS é destruído **sem snapshot** (`skipFinalSnapshot: true` + `backupRetentionPeriod: 0`) — os dados são perdidos; aceitável para o projeto avaliativo.
+- O state bucket e a role OIDC continuam existindo (custo de centavos) para permitir redeploy.
+- Um push em `main` recria a infra via `deploy.yml`; antes do teardown é preciso desabilitar o workflow (ou usar um guard `BREVLY_DEPLOY_ENABLED=false`).
+- O R2 e os CNAMEs órfãos exigem limpeza manual.
+- O hardening só passa a valer no próximo `pulumi up`; o script já cobre o estado antigo.

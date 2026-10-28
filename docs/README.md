@@ -9,14 +9,15 @@
 | `../spec.md` | Spec completo do projeto (requisitos, checklist de compliance, arquitetura, API, infra) |
 | [`status.md`](./status.md) | **Memória de execução** — estado das fases, subprojetos, gotchas operacionais e próximos passos |
 | [`workflow.md`](./workflow.md) | Padrões e fluxo de desenvolvimento (ciclo por tarefa, commits, verificação, documentação) |
-| [`decisions.md`](./decisions.md) | ADRs — decisões técnicas com alternativas consideradas e o porquê (identificador, redirect, short code, deploy, storage, estado Pulumi) |
+| [`decisions.md`](./decisions.md) | ADRs — decisões técnicas com alternativas consideradas e o porquê (identificador, redirect, short code, deploy, storage, estado Pulumi, teardown) |
 | [`api.md`](./api.md) | Contratos da API, exemplos e códigos de erro |
 | [`database.md`](./database.md) | Schema, migrations e comandos `db:migrate` |
 | [`docker.md`](./docker.md) | Dockerfile multi-stage e docker-compose local |
 | [Design tokens (web)](../web/docs/design-tokens.md) | Tokens oficiais do Figma (`blue-base`, `gray-100..600`, `danger`) — fonte de verdade visual |
 | [Design spec (web)](../web/docs/design-spec.md) | Spec das telas e componentes extraída do Figma (8 telas, estados, layout) |
 | [`deploy.md`](./deploy.md) | Passo a passo do deploy AWS (ECS/RDS/S3/CloudFront) |
-| [`infra-pulumi.md`](./infra-pulumi.md) | Stack `brevly-prod`, estado S3, preview/up |
+| [`teardown.md`](./teardown.md) | Runbook para destruir a infra, parar custos e limpar órfãos (AWS + R2) |
+| [`infra-pulumi.md`](./infra-pulumi.md) | Stack `brevly-prod`, estado S3, preview/up e teardown |
 | [`ci-cd.md`](./ci-cd.md) | Workflows GitHub Actions (OIDC, PR preview, deploy main) |
 | [`squarespace-dns.md`](./squarespace-dns.md) | Guia para adicionar os CNAMEs do Brev.ly no painel DNS da Squarespace |
 
