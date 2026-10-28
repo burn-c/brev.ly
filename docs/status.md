@@ -8,7 +8,7 @@
 
 - **Repositório:** `brev.ly/` · branch `main` · commits diretos em `main`
 - **GitHub (público):** `https://github.com/burn-c/brev.ly` — publicado na Fase 7/9 após auditoria de segurança
-- **Produção (deploy verde):** front `https://brev-ly.burndev.app` · API `https://api.brev-ly.burndev.app` · CSV `https://brev-ly.burndev.app/csv/<uuid>.csv`
+- **Produção:** 🔴 **offline desde 2026-10-28** (deploy desativado; infraestrutura desligada para evitar custos). URLs históricas: front `https://brev-ly.burndev.app` · API `https://api.brev-ly.burndev.app` · CSV `https://brev-ly.burndev.app/csv/<uuid>.csv`. Reativação: [`teardown.md`](./teardown.md#8-recriar-depois) + deploy manual.
 - **Contexto:** projeto avaliativo Pós-Graduação TD 360 (FTR Rocketseat) — [`spec.md`](../spec.md)
 - **Docs:** [`workflow.md`](./workflow.md) (padrões) · [`decisions.md`](./decisions.md) (ADRs) · [`api.md`](./api.md) · [`database.md`](./database.md)
 - **Instruções p/ agentes:** [`AGENTS.md`](../AGENTS.md)
@@ -21,7 +21,7 @@
 - [x] Fase 4 — Front-end (páginas `/`, `/:url-encurtada`, `*`; fluxos; UX; responsividade) — **concluída** (fidelidade Figma + revisão visual final validadas)
 - [x] Fase 5 — Docker (Dockerfile multi-stage + docker-compose local)
 - [x] Fase 6 — Infra (Pulumi: VPC/ECS/RDS/S3/CloudFront, stack `brevly-prod` — **deploy aplicado e funcional**)
-- [x] Fase 7 — CI/CD (GitHub Actions + OIDC — **pipelines verdes, deploy automático em main**)
+- [x] Fase 7 — CI/CD (GitHub Actions + OIDC — **pipelines verdes, deploy manual sob demanda**)
 - [x] Fase 8 — Testes (server: 77 Vitest · web: Vitest + Testing Library) — **concluída**
 - [x] Fase 9 — Entrega (checklist 26 itens, README, docs, submissão FTR) — **concluída**
 
@@ -56,7 +56,7 @@
 - **Deploy aplicado e funcional (2026-09-28):** VPC, RDS (available), CloudFront (CDN), ECS Fargate (1 task healthy no ALB), ECR. API validada via ALB.
 - **Hardening (2026-09-28, Fase de segurança):** domínio próprio `brev-ly.burndev.app` + `api.brev-ly.burndev.app`; buckets S3 **privados via OAC** (policies públicas removidas); `DATABASE_URL` via **Secrets Manager** (ADR-011); redeploy via tag `sha`; ALB recriado (novo DNS); ECR `scanOnPush`; **role OIDC dedicada** `GitHubActionsOIDCRoleBrevly` (isola do upload-widget — ADR-010/011). Infra aplicada com `enableTls=false` (cert ACM `PENDING_VALIDATION`).
 - **Backend de estado:** `s3://brevly-pulumi-state` (**bucket exclusivo do Brev.ly**, versionado — substitui o `burn-pulumi-state` do ADR-006, inacessível desta conta; **ADR-009**).
-- **CI/CD ativo e validado (Fase 7 concluída):** workflows `pr.yml` (lint/typecheck/test/preview) e `deploy.yml` (ECR → pulumi up → redeploy → migrate → web) **verdes**. OIDC via role **dedicada** `GitHubActionsOIDCRoleBrevly` (isola do upload-widget — ADR-012), secrets `AWS_OIDC_ROLE_ARN` + `DB_PASSWORD`, variable `BREVLY_ENABLE_TLS=true`. Deploy 100% verde validado: build ✓, pulumi up ✓, migrate (ECS task) ✓, web ✓. PR check verde (3 jobs).
+- **CI/CD (Fase 7 concluída, deploy agora manual):** workflows `pr.yml` (lint/typecheck/test/preview) e `deploy.yml` (`workflow_dispatch` com confirmação `deploy-brevly-prod`: ECR → pulumi up → redeploy → migrate → web). **Push em `main` não dispara mais o deploy**; a variable `BREVLY_DEPLOY_ENABLED=false` bloqueia até o disparo manual. OIDC via role **dedicada** `GitHubActionsOIDCRoleBrevly` (isola do upload-widget — ADR-012), secrets `AWS_OIDC_ROLE_ARN` + `DB_PASSWORD`, variable `BREVLY_ENABLE_TLS=true`. Fluxo completo validado antes da desativação: build ✓, pulumi up ✓, migrate (ECS task) ✓, web ✓. PR check verde (3 jobs).
 - **Teardown automatizado (2026-10-28):** `infra/scripts/teardown.sh` + `pnpm teardown` — guarda de conta/região, preview, drenagem do ECS, esvaziamento dos buckets, `pulumi destroy` com retries, limpeza de log group/secret fora do state e sweep de órfãos. Hardening no `index.ts`: `forceDestroy` nos buckets, secret com `recoveryWindowInDays: 0` e `deletionProtection: false`. Runbook em [`teardown.md`](./teardown.md) (ADR-014).
 - Versões pinadas `@pulumi/aws@7.35.0` + `@pulumi/awsx@3.6.0` (compatíveis com os plugins já instalados localmente).
 - Ver [`infra-pulumi.md`](./infra-pulumi.md), [`deploy.md`](./deploy.md), [`teardown.md`](./teardown.md) e [`squarespace-dns.md`](./squarespace-dns.md).
@@ -101,6 +101,7 @@
 - **Destroy — programa Pulumi:** por padrão o `pulumi destroy` **não executa o programa** (usa o state), então `dbPassword`/`accountId` não são necessários para destruir; `--run-program` reativa a execução e volta a exigi-los. A config continua necessária para `pulumi up`.
 - **Destroy — CloudFront:** desabilitar + deletar leva 15–30 min; o delete é assíncrono. Não interromper; reexecutar o script é idempotente.
 - **Custo real:** a estimativa do spec (~US$ 15–20) não incluía NAT Gateway (~33) nem ALB (~16); o total fica ~US$ 70/mês. "Pausar" (ECS 0 + RDS stop) deixa ~US$ 50; só o destroy zera.
+- **Deploy manual (2026-10-28):** o `deploy.yml` só roda por `workflow_dispatch` com o input `confirm=deploy-brevly-prod`; push em `main` não recria a infra. A variable `BREVLY_DEPLOY_ENABLED=false` pula o job `guard` e, por dependência, todos os jobs. Após um destroy completo, o ECR não existe: rode `pulumi up` antes de disparar o deploy (o workflow falha com mensagem clara se o ECR estiver ausente).
 - **Config local × CI (dbPassword):** o `pulumi preview` local pode mostrar `password: [secret] => [secret]` no RDS e `replace` no `SecretVersion` quando o `brevly-infra:dbPassword` do `Pulumi.brevly-prod.yaml` local difere do valor do deploy (CI usa o secret `DB_PASSWORD`). **Não rode `pulumi up` local** nesse estado — isso rotaciona a senha do RDS. Alinhe o valor local ao secret do GitHub antes, ou deixe o deploy para o `deploy.yml`.
 
 ## Decisões recentes
@@ -117,13 +118,14 @@
 | [`decisions.md#ADR-008`](./decisions.md) | Retry esgotado → `500` | `ShortCodeGenerationError`; `409` só para custom code |
 | [`decisions.md#ADR-009`](./decisions.md) | Backend Pulumi exclusivo | `s3://brevly-pulumi-state` (substitui ADR-006) |
 | [`decisions.md#ADR-014`](./decisions.md) | Teardown automatizado | script + hardening; state bucket preservado |
+| [`decisions.md#ADR-015`](./decisions.md) | Deploy manual sob demanda | `workflow_dispatch` + confirmação + guard; push não recria |
 
 ## Próximos passos
 
 1. **Antes do próximo deploy:** rodar `pnpm preview` para conferir o hardening (`forceDestroy`, `recoveryWindowInDays`, `deletionProtection`). O log group continua fora do state — o teardown o remove; não é necessário import.
 2. **Revisão final de entrega (Fase 9):** conferir o diff final contra o `spec.md` e o checklist de compliance (26/26 ✓ — tabela no `README.md`).
 3. **Submissão na plataforma FTR** (caso aplicável): submeter o projeto avaliativo no TD 360 (repositório público `https://github.com/burn-c/brev.ly`, branch `main`).
-4. **Acompanhamento pós-entrega:** monitorar os pipelines (`pr.yml`/`deploy.yml`) e o deploy de produção para garantir que permanecem verdes após qualquer mudança futura.
+4. **Acompanhamento pós-entrega:** o deploy de produção está desativado/offline; se for reativar, seguir [`teardown.md`](./teardown.md#8-recriar-depois), definir `BREVLY_DEPLOY_ENABLED=true` e disparar o `deploy.yml` manualmente.
 
 ## Como atualizar este documento
 

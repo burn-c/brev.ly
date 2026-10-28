@@ -480,6 +480,56 @@ os incluía). O `pulumi destroy` cru não termina limpo:
 - Teardown repetível em ~30–45 min, com verificação objetiva de órfãos.
 - O RDS é destruído **sem snapshot** (`skipFinalSnapshot: true` + `backupRetentionPeriod: 0`) — os dados são perdidos; aceitável para o projeto avaliativo.
 - O state bucket e a role OIDC continuam existindo (custo de centavos) para permitir redeploy.
-- Um push em `main` recria a infra via `deploy.yml`; antes do teardown é preciso desabilitar o workflow (ou usar um guard `BREVLY_DEPLOY_ENABLED=false`).
+- Um **deploy manual** (`workflow_dispatch`) recria a infra via `deploy.yml`; push em `main` **não** dispara. Use o guard `BREVLY_DEPLOY_ENABLED=false` enquanto offline (ADR-015).
 - O R2 e os CNAMEs órfãos exigem limpeza manual.
 - O hardening só passa a valer no próximo `pulumi up`; o script já cobre o estado antigo.
+
+---
+
+## ADR-015 — Deploy de produção manual sob demanda
+
+- **Status:** Aceita
+- **Data:** 2026-10-28
+
+### Contexto
+
+Com a aplicação offline para evitar custos, o deploy automático em push para
+`main` passou a ser um risco: qualquer commit (inclusive docs) recriaria a
+infraestrutura destruída. Era preciso manter o repositório publicável e o CI de
+PR ativo, mas impedir que um push reativasse a produção.
+
+### Alternativas consideradas
+
+- **Manter push + filtros de paths:** reduz o risco, mas um push em `server/`,
+  `web/` ou `infra/` ainda recriaria tudo; difícil de garantir.
+- **Desabilitar o workflow no GitHub:** resolve, mas fica implícito e fácil de
+  reativar por engano; não documenta a intenção.
+- **`workflow_dispatch` + confirmação + guard (escolhido):** explícito,
+  auditável (quem disparou), com dupla trava (`confirm` e variable) e sem
+  depender de configuração invisível no repositório.
+- **Deploy agendado:** não faz sentido para uma aplicação offline.
+
+### Decisão
+
+- `deploy.yml` passa a ter **apenas** `workflow_dispatch`, com input obrigatório
+  `confirm=deploy-brevly-prod` validado por um job `guard`.
+- A variable `BREVLY_DEPLOY_ENABLED=false` faz o `guard` ser pulado e, por
+  dependência (`needs`), todos os jobs também. Sem a variable (ou com `true`),
+  o deploy manual funciona.
+- O `pr.yml` continua rodando em PR, mas apenas `pulumi preview` (não aplica).
+- Após um destroy completo, o deploy manual exige `pulumi up` antes, porque o
+  ECR é criado pelo Pulumi e o build/push roda antes do `pulumi up`; o workflow
+  tem um preflight que falha com mensagem clara se o ECR não existir.
+- O README e os docs passam a informar que a produção está **offline** e o
+  deploy **desativado**.
+
+### Consequências
+
+- Push em `main` não recria a infra; para deployar é preciso uma ação manual
+  (`gh workflow run deploy.yml -f confirm=deploy-brevly-prod`).
+- O fluxo de reativação tem duas etapas: recriar a infra (`pulumi up`) e depois
+  disparar o workflow.
+- O guard é opt-in: se a variable não existir, o deploy manual permanece
+  liberado. Para bloquear, defina `BREVLY_DEPLOY_ENABLED=false`.
+- O CI de PR continua consumindo AWS no `pulumi preview`; pode ser desabilitado
+  junto se o período offline for longo.

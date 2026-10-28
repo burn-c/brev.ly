@@ -2,6 +2,8 @@
 
 Encurtador de URLs **Full Stack** — projeto avaliativo da **Fase 1** da Pós-Graduação Full-Stack com IA (Tech Developer 360º) da Faculdade de Tecnologia Rocketseat.
 
+> **🔴 Produção desativada (2026-10-28):** o deploy de produção está **desligado** e a aplicação está **offline** para evitar custos de infraestrutura. O `deploy.yml` agora é **manual** (`workflow_dispatch`) e **não dispara em push para `main`**. Para bloquear também o disparo manual, defina a variable `BREVLY_DEPLOY_ENABLED=false` (`gh variable set BREVLY_DEPLOY_ENABLED --body false`) ou desabilite o workflow. Para religar, siga [`docs/teardown.md`](./docs/teardown.md#8-recriar-depois) e dispare o workflow com `confirm=deploy-brevly-prod`.
+
 ## Visão Geral
 
 Aplicação que permite encurtar links, gerenciar (listar/deletar), acompanhar a quantidade de acessos de cada link e exportar relatórios em CSV via CDN. O projeto exercita três áreas: **Frontend**, **Backend** e **DevOps**.
@@ -129,19 +131,30 @@ Fases do roadmap em [`spec.md`](./spec.md#10-roadmap):
 - [x] **Fase 4 — Front-end** (páginas `/`, `/:url-encurtada`, `*`; fluxos; UX; responsividade) — fidelidade Figma + revisão visual final validadas
 - [x] **Fase 5 — Docker** (Dockerfile multi-stage + docker-compose local)
 - [x] **Fase 6 — Infra (Pulumi)** (VPC/ECS/RDS/S3/CloudFront, stack `brevly-prod` — **deploy aplicado e funcional**)
-- [x] **Fase 7 — CI/CD** (GitHub Actions + OIDC — **pipelines verdes, deploy automático em main**)
+- [x] **Fase 7 — CI/CD** (GitHub Actions + OIDC — **pipelines verdes, deploy manual sob demanda**)
 - [x] **Fase 8 — Testes** (server: 77 Vitest · web: Vitest + Testing Library)
 - [x] **Fase 9 — Entrega** (checklist de compliance 26/26, README, docs)
 
 ## Deploy / Acesso
 
-Aplicação em produção (deploy automático via GitHub Actions em `main`):
+> **Status:** 🔴 **offline · deploy desativado** (2026-10-28) para evitar custos. As URLs abaixo ficam como referência e voltam quando a infraestrutura for recriada e o deploy manual for disparado.
 
-| Recurso | URL |
-|---|---|
-| Front-end (SPA + redirect via CloudFront) | <https://brev-ly.burndev.app> |
-| API (Fastify via ALB) | <https://api.brev-ly.burndev.app> |
-| CSV (via CDN) | `https://brev-ly.burndev.app/csv/<uuid>.csv` |
+| Recurso | URL | Status |
+|---|---|---|
+| Front-end (SPA + redirect via CloudFront) | <https://brev-ly.burndev.app> | 🔴 offline |
+| API (Fastify via ALB) | <https://api.brev-ly.burndev.app> | 🔴 offline |
+| CSV (via CDN) | `https://brev-ly.burndev.app/csv/<uuid>.csv` | 🔴 offline |
+
+### Reativar o deploy
+
+1. Defina a variable `BREVLY_DEPLOY_ENABLED=true` (ou remova) no GitHub.
+2. Se a infra foi destruída, recrie-a: `cd infra && AWS_REGION=us-east-1 pulumi up -s brevly-prod` (RDS/ALB/CloudFront novos; ajuste DNS/TLS se necessário — ver [`docs/teardown.md`](./docs/teardown.md#8-recriar-depois)).
+3. Dispare o deploy manual:
+   ```bash
+   gh workflow run deploy.yml -f confirm=deploy-brevly-prod
+   ```
+
+> O deploy não roda mais em push para `main`; sem o passo 3, a infra **não** é recriada.
 
 ## Compliance (checklist de 26 itens)
 

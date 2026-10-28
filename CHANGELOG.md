@@ -2,6 +2,14 @@
 
 Todas as mudanças notáveis do projeto serão documentadas neste arquivo, seguindo o estilo [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [0.10.1] - 2026-10-28
+
+### Alterado
+
+- **Deploy manual:** `deploy.yml` não dispara mais em push para `main`; agora usa `workflow_dispatch` com confirmação `deploy-brevly-prod` e guard opcional `BREVLY_DEPLOY_ENABLED=false`. Push em `main` não recria a infra (ADR-015).
+- **README/status:** produção documentada como **offline** e deploy **desativado** para evitar custos de infraestrutura, com o passo a passo de reativação.
+- **CI/CD:** preflight do deploy falha com mensagem clara se o ECR não existir (necessário rodar `pulumi up` após um teardown completo).
+
 ## [0.10.0] - 2026-10-28
 
 ### Adicionado

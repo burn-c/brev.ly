@@ -86,4 +86,4 @@ Esses ajustes entram no próximo `pulumi up`; o script já cobre o estado antigo
 
 ## Deploy
 
-O fluxo de deploy (push de imagem, `pulumi up`, sync do front, invalidação do CloudFront) é automatizado pelo CI/CD (Fase 7). Ver [`deploy.md`](./deploy.md) e [`ci-cd.md`](./ci-cd.md). Para desligar tudo e parar os custos, ver [`teardown.md`](./teardown.md).
+O fluxo de deploy (push de imagem, `pulumi up`, sync do front, invalidação do CloudFront) é **manual** (`workflow_dispatch`) desde 2026-10-28 — push em `main` não dispara. Ver [`deploy.md`](./deploy.md) e [`ci-cd.md`](./ci-cd.md). Para desligar tudo e parar os custos, ver [`teardown.md`](./teardown.md).

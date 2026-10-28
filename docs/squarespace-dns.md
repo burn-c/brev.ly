@@ -72,7 +72,7 @@ Cada comando deve retornar o valor correspondente da tabela acima (com ponto fin
 ## 4. Próximos passos
 
 1. **Aguardar a emissão do certificado:** `aws acm describe-certificate --certificate-arn <certArn>` até `Status: ISSUED` (o Pulumi exporta `certArn` e `certValidationRecords`).
-2. Quando `ISSUED` → ativar o TLS (Fase 4): `pulumi config set brevly-infra:enableTls true` + `pulumi up` (ou definir a variable `BREVLY_ENABLE_TLS=true` no GitHub para o deploy automático).
+2. Quando `ISSUED` → ativar o TLS (Fase 4): `pulumi config set brevly-infra:enableTls true` + `pulumi up` (ou definir a variable `BREVLY_ENABLE_TLS=true` no GitHub para o deploy manual).
 3. Validar end-to-end (Fase 5): `https://brev-ly.burndev.app` e `https://api.brev-ly.burndev.app/health`.
 
 ---

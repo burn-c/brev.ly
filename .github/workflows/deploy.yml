@@ -1,9 +1,16 @@
-name: Deploy
+name: Deploy (manual)
 
+# Deploy sob demanda: NÃO dispara em push para main.
+# Use "Run workflow" no GitHub Actions e digite a confirmação.
+# Guard opcional: defina a variable BREVLY_DEPLOY_ENABLED=false para bloquear
+# qualquer deploy (inclusive manual) enquanto a infra estiver derrubada.
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Digite "deploy-brevly-prod" para confirmar'
+        required: true
+        type: string
 
 concurrency:
   group: deploy-main
@@ -15,9 +22,31 @@ env:
   S3_BUCKET: brevly-frontend-web
 
 jobs:
+  guard:
+    name: Confirm manual deploy
+    runs-on: ubuntu-latest
+    if: vars.BREVLY_DEPLOY_ENABLED != 'false'
+    permissions:
+      contents: read
+    steps:
+      - name: Validate ref and confirmation
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Deploy de produção só pode ser disparado a partir de main."
+            exit 1
+          fi
+          if [ "$CONFIRM" != "deploy-brevly-prod" ]; then
+            echo "::error::Confirmação inválida. Digite deploy-brevly-prod."
+            exit 1
+          fi
+          echo "Deploy confirmado."
+
   build-and-push-server:
     name: Build & push server image (ECR)
     runs-on: ubuntu-latest
+    needs: guard
     permissions:
       id-token: write
       contents: read
@@ -31,6 +60,13 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
           aws-region: us-east-1
+
+      - name: Check ECR repository exists
+        run: |
+          if ! aws ecr describe-repositories --repository-names "$ECR_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::Repositório ECR $ECR_REPOSITORY não existe. Após um teardown, rode 'pulumi up -s brevly-prod' em infra/ antes do deploy."
+            exit 1
+          fi
 
       - name: Login to Amazon ECR
         id: ecr-login

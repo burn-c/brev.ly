@@ -165,11 +165,10 @@ Aplicado em [`infra/index.ts`](../infra/index.ts):
    cd infra
    AWS_REGION=us-east-1 pulumi stack export -s brevly-prod | grep -c '"urn"'   # deve ser 0
    ```
-3. **Impeça o redeploy acidental**: qualquer push em `main` roda o `deploy.yml`
-   e recria tudo. Antes do teardown, desabilite o workflow ou adicione um guard:
+3. **Impeça o redeploy acidental**: o deploy agora é **manual** (`workflow_dispatch`), mas ainda pode ser disparado por engano. Defina a variable `BREVLY_DEPLOY_ENABLED=false` (o job `guard` bloqueia tudo) ou desabilite o workflow:
    ```bash
    gh workflow disable deploy.yml
-   # ou: repo variable BREVLY_DEPLOY_ENABLED=false + `if:` no deploy.yml
+   # ou: repo variable BREVLY_DEPLOY_ENABLED=false
    ```
 4. Verifique o custo no **Cost Explorer**/Budgets no dia seguinte (pode haver
    cobrança residual de horas já consumidas).
@@ -227,8 +226,17 @@ pulumi up -s brevly-prod
 ```
 
 Depois: build/push da imagem no ECR, `migrate` via ECS task, build do web e
-`aws s3 sync` + invalidação do CloudFront (ou simplesmente push em `main` com o
-`deploy.yml` reabilitado).
+`aws s3 sync` + invalidação do CloudFront. O caminho normal é liberar o deploy
+manual (`BREVLY_DEPLOY_ENABLED=true` ou remova a variable) e disparar:
+
+```bash
+gh workflow run deploy.yml -f confirm=deploy-brevly-prod
+```
+
+> O workflow builda/pusha a imagem **antes** do `pulumi up`; após um destroy
+> completo o ECR não existe. Por isso, rode o `pulumi up` do passo anterior
+> primeiro (ele recria o ECR). Se esquecer, o preflight do workflow falha com
+> uma mensagem clara.
 
 **Atenção ao TLS:** o RDS volta **vazio** (sem snapshot) e o CloudFront/ALB
 recebem novos DNS. Com `enableTls=true`, o certificado ACM é recriado e precisa
@@ -256,7 +264,7 @@ ser validado de novo no DNS; os CNAMEs do Squarespace devem ser atualizados.
 - [ ] Rodei `pnpm teardown --dry-run` e revisei o preview
 - [ ] Rodei o destroy e o script saiu com código 0
 - [ ] `pulumi stack export` está sem recursos (`urn` = 0)
-- [ ] Desabilitei o `deploy.yml` (ou `BREVLY_DEPLOY_ENABLED=false`)
+- [ ] Defini `BREVLY_DEPLOY_ENABLED=false` (ou desabilitei o `deploy.yml`; o deploy é manual)
 - [ ] Removi/revoguei o R2 e limpei `.env` (se definitivo)
 - [ ] Conferi o custo no dia seguinte
 - [ ] Atualizei `docs/status.md` com a data do teardown

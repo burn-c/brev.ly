@@ -2,7 +2,7 @@
 
 Guia do deploy da aplicação na AWS (Pulumi). Stack `brevly-prod`.
 
-> **Status:** ✅ deploy aplicado e funcional (2026-09-28). O CI/CD (Fase 7) automatiza o deploy em `main` via GitHub Actions + OIDC.
+> **Status (2026-10-28):** 🔴 **offline · deploy desativado** para evitar custos. O deploy agora é manual (`workflow_dispatch`) e a infraestrutura foi desligada — ver [`teardown.md`](./teardown.md). O histórico abaixo (2026-09-28) documenta o fluxo que foi validado antes da desativação; para recriar, ver a seção [Recriar depois](./teardown.md#8-recriar-depois).
 
 ## Arquitetura
 
@@ -72,20 +72,30 @@ Definidas no `infra/index.ts`: `DATABASE_URL`, `FRONTEND_URL=https://cdn.brevly.
 - **API (ALB):** `http://brevly-alb-254f025-408442978.us-east-1.elb.amazonaws.com` — health/CRUD validados.
 - **Front (CloudFront):** URL `https://d3nkc5rftpck20.cloudfront.net` (certificado default).
 - **Banco:** RDS `brevly-db62b3c22` (available), migrations aplicadas via ECS task.
-- **Deploy automatizado:** push em `main` → `pulumi up` → ECR → redeploy → migrate (ECS) → sync web + invalidação CloudFront.
+- **Deploy manual:** `workflow_dispatch` do `deploy.yml` com `confirm=deploy-brevly-prod` → ECR → redeploy → migrate (ECS) → sync web + invalidação CloudFront. **Push em `main` não dispara mais.** A variable `BREVLY_DEPLOY_ENABLED=false` bloqueia o workflow.
 
 ## Custos estimados
 
 | Recurso | ~US$/mês |
 |---|---|
-| RDS PostgreSQL micro | 12–15 |
-| ECS Fargate (mínimo) | 5–9 |
-| S3 + CloudFront + ECR | < 1 |
-| **Total** | **~15–20** |
+| NAT Gateway (single) | 33 |
+| ALB | 16 |
+| RDS PostgreSQL micro + 20 GB | 14 |
+| ECS Fargate (mínimo) | 6 |
+| S3 + CloudFront + ECR + Secrets Manager | < 2 |
+| **Total** | **~70** |
 
-> Sem uso ativo: use `pnpm teardown` (em `infra/`) para zerar os custos — o `pulumi destroy` cru não limpa buckets, secret em recovery window nem o log group. Ver [`teardown.md`](./teardown.md).
+> A estimativa antiga de US$ 15–20 não incluía NAT Gateway nem ALB. Sem uso ativo: use `pnpm teardown` (em `infra/`) para zerar os custos — o `pulumi destroy` cru não limpa buckets, secret em recovery window nem o log group. Ver [`teardown.md`](./teardown.md).
 
-## Roteiro para a Fase 7 (CI/CD)
+## Deploy manual (reativação)
 
-1. GitHub Actions com OIDC (role `GitHubActionsOIDCRole`).
-2. `pulumi up` no deploy; build+push da imagem ECR; sync do front + invalidação CloudFront; `db:migrate`.
+```bash
+# 1. Se a infra foi destruída, recrie ECR/infra primeiro (ver teardown.md#8-recriar-depois)
+cd infra
+AWS_REGION=us-east-1 pulumi up -s brevly-prod
+
+# 2. Dispare o deploy manual (confirmação obrigatória)
+gh workflow run deploy.yml -f confirm=deploy-brevly-prod
+```
+
+> O build/push da imagem roda **antes** do `pulumi up` no workflow, então o ECR precisa existir. Após um teardown completo, o passo 1 é obrigatório; se o ECR não existir, o workflow falha com mensagem clara.
