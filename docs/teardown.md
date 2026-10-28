@@ -226,10 +226,13 @@ pulumi up -s brevly-prod
 ```
 
 Depois: build/push da imagem no ECR, `migrate` via ECS task, build do web e
-`aws s3 sync` + invalidação do CloudFront. O caminho normal é liberar o deploy
-manual (`BREVLY_DEPLOY_ENABLED=true` ou remova a variable) e disparar:
+`aws s3 sync` + invalidação do CloudFront. O caminho normal é reabilitar o
+workflow e liberar o guard (`BREVLY_DEPLOY_ENABLED=true` ou remova a variable)
+e disparar:
 
 ```bash
+gh workflow enable deploy.yml
+gh variable set BREVLY_DEPLOY_ENABLED --body true   # ou: gh variable delete BREVLY_DEPLOY_ENABLED
 gh workflow run deploy.yml -f confirm=deploy-brevly-prod
 ```
 

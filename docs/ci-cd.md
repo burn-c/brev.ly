@@ -9,7 +9,7 @@ Pipelines de **GitHub Actions** para o Brev.ly. Autenticação AWS via **OIDC** 
 | `pr.yml` | Pull request para `main` | Server: lint/format/typecheck/test/build (77 testes) · Web: lint/format/typecheck/build · Pulumi preview (`brevly-prod`) — **não aplica** |
 | `deploy.yml` | **Manual** (`workflow_dispatch`, a partir de `main`) com confirmação `deploy-brevly-prod` | 1. Build+push imagem server → ECR (`sha` + `latest`) · 2. `pulumi up` · 3. `Force ECS redeploy` · 4. `db:migrate` (via ECS task) · 5. Sync web → S3 + invalidação CloudFront |
 
-> **Produção desativada (2026-10-28):** o deploy **não dispara mais em push** para `main` e a infraestrutura foi desligada para evitar custos. Um push em `main` **não recria** a infra. Para reativar, ver [`teardown.md`](./teardown.md#8-recriar-depois) e dispare o workflow manualmente.
+> **Produção desativada (2026-10-28):** o deploy **não dispara mais em push** para `main` e a infraestrutura foi desligada para evitar custos. O workflow `Deploy (manual)` está **`disabled_manually`** e a variable `BREVLY_DEPLOY_ENABLED=false`. Um push em `main` **não recria** a infra. Para reativar, ver [`teardown.md`](./teardown.md#8-recriar-depois) (`gh workflow enable deploy.yml` + variable `true`) e dispare o workflow manualmente.
 
 ## Isolamento entre aplicações (importante)
 
@@ -44,12 +44,12 @@ Repo público `burn-c/brev.ly` (main). Ver `docs/status.md`.
 | `AWS_OIDC_ROLE_ARN` | ARN da `GitHubActionsOIDCRoleBrevly` | ✅ definido |
 | `DB_PASSWORD` | Senha do RDS (`brevly-infra:dbPassword`) | ✅ definido |
 | `BREVLY_ENABLE_TLS` (var) | `true` → CloudFront alias + ALB 443 + redirect | ✅ definido |
-| `BREVLY_DEPLOY_ENABLED` (var, opcional) | `false` → bloqueia o deploy manual (guard do `deploy.yml`) | usar `false` enquanto offline |
+| `BREVLY_DEPLOY_ENABLED` (var, opcional) | `false` → bloqueia o deploy manual (guard do `deploy.yml`) | ✅ `false` + workflow `disabled_manually` |
 
 ## Notas operacionais
 
 - **Deploy manual:** o `deploy.yml` só roda via `workflow_dispatch`, **a partir de `main`**, e exige digitar `deploy-brevly-prod` no input `confirm`. Push em `main` **não** dispara nem recria a infra.
-- **Guard de produção:** a variable `BREVLY_DEPLOY_ENABLED=false` faz o job `guard` ser pulado, e todos os jobs dependentes também. Use enquanto a infra estiver derrubada; remova/defina `true` para liberar.
+- **Guard de produção:** a variable `BREVLY_DEPLOY_ENABLED=false` faz o job `guard` ser pulado, e todos os jobs dependentes também. Use enquanto a infra estiver derrubada; remova/defina `true` **e** reabilite o workflow (`gh workflow enable deploy.yml`) para liberar.
 - **Após um teardown completo:** o job de build/push roda antes do `pulumi up` e o repositório ECR não existe. Rode `pulumi up -s brevly-prod` uma vez (ver [`teardown.md`](./teardown.md#8-recriar-depois)) para recriar ECR/infra, depois dispare o deploy manual. O workflow tem um preflight que falha com mensagem clara se o ECR não existir.
 - **Backend de estado:** `s3://brevly-pulumi-state` (exclusivo — ADR-009). Login no CI: `pulumi login s3://brevly-pulumi-state` com `AWS_REGION=us-east-1`.
 - **Passphrase da stack:** vazio (`PULUMI_CONFIG_PASSPHRASE=""`). A config (`Pulumi.brevly-prod.yaml`) **não é versionada**; o workflow recria `accountId`, `imageTag`, `enableTls` e `dbPassword` (secret) antes do `pulumi up`.

@@ -90,6 +90,10 @@ Definidas no `infra/index.ts`: `DATABASE_URL`, `FRONTEND_URL=https://cdn.brevly.
 ## Deploy manual (reativação)
 
 ```bash
+# 0. Reabilite o workflow e libere o guard
+gh workflow enable deploy.yml
+gh variable set BREVLY_DEPLOY_ENABLED --body true   # ou: gh variable delete BREVLY_DEPLOY_ENABLED
+
 # 1. Se a infra foi destruída, recrie ECR/infra primeiro (ver teardown.md#8-recriar-depois)
 cd infra
 AWS_REGION=us-east-1 pulumi up -s brevly-prod

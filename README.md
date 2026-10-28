@@ -2,7 +2,7 @@
 
 Encurtador de URLs **Full Stack** — projeto avaliativo da **Fase 1** da Pós-Graduação Full-Stack com IA (Tech Developer 360º) da Faculdade de Tecnologia Rocketseat.
 
-> **🔴 Produção desativada (2026-10-28):** o deploy de produção está **desligado** e a aplicação está **offline** para evitar custos de infraestrutura. O `deploy.yml` agora é **manual** (`workflow_dispatch`) e **não dispara em push para `main`**. Para bloquear também o disparo manual, defina a variable `BREVLY_DEPLOY_ENABLED=false` (`gh variable set BREVLY_DEPLOY_ENABLED --body false`) ou desabilite o workflow. Para religar, siga [`docs/teardown.md`](./docs/teardown.md#8-recriar-depois) e dispare o workflow com `confirm=deploy-brevly-prod`.
+> **🔴 Produção desativada (2026-10-28):** o deploy de produção está **desligado** e a aplicação está **offline** para evitar custos de infraestrutura. O `deploy.yml` agora é **manual** (`workflow_dispatch`), **não dispara em push para `main`** e está **desabilitado** no GitHub (`disabled_manually`), com a variable `BREVLY_DEPLOY_ENABLED=false`. Para religar, siga [`docs/teardown.md`](./docs/teardown.md#8-recriar-depois) e reabilite o workflow + variable antes do disparo manual.
 
 ## Visão Geral
 
@@ -147,7 +147,11 @@ Fases do roadmap em [`spec.md`](./spec.md#10-roadmap):
 
 ### Reativar o deploy
 
-1. Defina a variable `BREVLY_DEPLOY_ENABLED=true` (ou remova) no GitHub.
+1. Reabilite o workflow e libere o guard:
+   ```bash
+   gh workflow enable deploy.yml
+   gh variable set BREVLY_DEPLOY_ENABLED --body true   # ou: gh variable delete BREVLY_DEPLOY_ENABLED
+   ```
 2. Se a infra foi destruída, recrie-a: `cd infra && AWS_REGION=us-east-1 pulumi up -s brevly-prod` (RDS/ALB/CloudFront novos; ajuste DNS/TLS se necessário — ver [`docs/teardown.md`](./docs/teardown.md#8-recriar-depois)).
 3. Dispare o deploy manual:
    ```bash
