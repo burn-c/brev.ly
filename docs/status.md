@@ -101,6 +101,7 @@
 - **Destroy — programa Pulumi:** por padrão o `pulumi destroy` **não executa o programa** (usa o state), então `dbPassword`/`accountId` não são necessários para destruir; `--run-program` reativa a execução e volta a exigi-los. A config continua necessária para `pulumi up`.
 - **Destroy — CloudFront:** desabilitar + deletar leva 15–30 min; o delete é assíncrono. Não interromper; reexecutar o script é idempotente.
 - **Custo real:** a estimativa do spec (~US$ 15–20) não incluía NAT Gateway (~33) nem ALB (~16); o total fica ~US$ 70/mês. "Pausar" (ECS 0 + RDS stop) deixa ~US$ 50; só o destroy zera.
+- **Config local × CI (dbPassword):** o `pulumi preview` local pode mostrar `password: [secret] => [secret]` no RDS e `replace` no `SecretVersion` quando o `brevly-infra:dbPassword` do `Pulumi.brevly-prod.yaml` local difere do valor do deploy (CI usa o secret `DB_PASSWORD`). **Não rode `pulumi up` local** nesse estado — isso rotaciona a senha do RDS. Alinhe o valor local ao secret do GitHub antes, ou deixe o deploy para o `deploy.yml`.
 
 ## Decisões recentes
 

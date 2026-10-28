@@ -243,6 +243,7 @@ ser validado de novo no DNS; os CNAMEs do Squarespace devem ser atualizados.
 | Destroy para no CloudFront | Delete assíncrono (15–30 min) | Aguarde/reexecute; não cancele |
 | `secret ... already scheduled for deletion` | Recovery window de 7 dias | O script roda `--force-delete-without-recovery`; se persistir, faça manualmente |
 | `Missing required configuration variable` | Você passou `--run-program` | Não passe; o destroy usa o state |
+| Preview mostra troca de senha do RDS | `dbPassword` local difere do deploy (CI usa `DB_PASSWORD`) | **Não rode `pulumi up` local**; alinhe o secret ou aplique via CI |
 | `PermanentRedirect` no state | `AWS_REGION` diferente de `us-east-1` | O script exporta a região correta |
 | `InvalidParameterValue: deletion protection` | RDS com proteção | `aws rds modify-db-instance --no-deletion-protection --apply-immediately` |
 | `Certificate ... in use` | CloudFront/ALB ainda existe | Destrua-os primeiro (o Pulumi ordena; se manual, faça nessa ordem) |
